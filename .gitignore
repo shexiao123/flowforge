@@ -1,0 +1,17 @@
+# 依赖与临时文件
+node_modules/
+package-lock.json
+
+# 测试产物
+_dl/
+_fix/
+_profile/
+_*.png
+_check.js
+_probe.mjs
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

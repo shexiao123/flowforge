@@ -1,0 +1,14 @@
+{
+  "name": "flowforge",
+  "version": "1.0.0",
+  "description": "零依赖单文件流程图 / 数据流向图编辑器",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/ui.test.mjs && node tests/io.test.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  },
+  "license": "MIT"
+}
