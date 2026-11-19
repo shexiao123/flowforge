@@ -174,6 +174,28 @@ html[data-theme="dark"] .btn-block.danger:hover{background:#1f1114}
 .pill.on{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
 .align-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 
+/* 形状选择器：分组标签 + 图标网格 */
+.shape-tabs{display:flex;gap:3px;margin-bottom:6px;background:var(--panel2);
+  border:1px solid var(--border);border-radius:8px;padding:2px}
+.stab{flex:1;height:22px;border-radius:6px;font-size:11px;color:var(--dim);background:transparent;border:none}
+.stab:hover{color:var(--text)}
+.stab.on{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.shape-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.spill{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  height:47px;padding:3px 2px 2px;border-radius:7px;border:1px solid var(--border);
+  background:var(--panel2);color:var(--dim);overflow:hidden;
+}
+.spill:hover{border-color:var(--accent);color:var(--text)}
+.spill.on{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
+.spill em{font-style:normal;font-size:9.5px;line-height:1;white-space:nowrap;
+  letter-spacing:-.2px;opacity:.9}
+.shico{width:28px;height:20px;display:block;flex:none}
+.tones{display:flex;gap:5px;flex-wrap:wrap}
+.tone{width:20px;height:20px;border-radius:50%;border:2px solid var(--panel);
+  box-shadow:0 0 0 1px var(--border);cursor:pointer}
+.tone:hover{box-shadow:0 0 0 2px var(--accent);transform:scale(1.08)}
+
 /* 状态栏 */
 .statusbar{
   display:flex;align-items:center;gap:14px;padding:0 14px;font-size:11.5px;color:var(--dim);
@@ -366,13 +388,62 @@ const THEMES = {
   }
 };
 
+/* 形状库。nodeShapePath 按 id 生成几何，shapeIcon 复用同一份几何出预览图标，
+   所以面板里的图标永远等于画布上的实物，不会两处各写一套慢慢跑偏。 */
 const SHAPES = [
-  {id:"rect",    name:"矩形"},
-  {id:"round",   name:"圆角"},
-  {id:"diamond", name:"菱形"},
-  {id:"ellipse", name:"椭圆"},
-  {id:"cylinder",name:"数据"}
+  {id:"rect",         name:"矩形",   group:"基础"},
+  {id:"round",        name:"圆角",   group:"基础"},
+  {id:"circle",       name:"圆形",   group:"基础"},
+  {id:"ellipse",      name:"椭圆",   group:"基础"},
+  {id:"diamond",      name:"菱形",   group:"基础"},
+  {id:"hexagon",      name:"六边形", group:"基础"},
+  {id:"triangle",     name:"三角形", group:"基础"},
+  {id:"parallelogram",name:"平行四边形", group:"基础"},
+  {id:"trapezoid",    name:"梯形",   group:"基础"},
+  {id:"star",         name:"星形",   group:"基础"},
+  {id:"cross",        name:"十字",   group:"基础"},
+  {id:"textonly",     name:"纯文字", group:"基础"},
+
+  {id:"document",     name:"文档",     group:"流程"},
+  {id:"multidoc",     name:"多文档",   group:"流程"},
+  {id:"predefined",   name:"预定义",   group:"流程"},
+  {id:"delay",        name:"延迟",     group:"流程"},
+  {id:"display",      name:"显示",     group:"流程"},
+  {id:"merge",        name:"合并",     group:"流程"},
+  {id:"or",           name:"或",       group:"流程"},
+  {id:"sort",         name:"排序",     group:"流程"},
+  {id:"card",         name:"卡片",     group:"流程"},
+  {id:"speech",       name:"对话",     group:"流程"},
+
+  {id:"cylinder",     name:"数据库",   group:"数据"},
+  {id:"storage",      name:"存储",     group:"数据"},
+  {id:"queue",        name:"队列",     group:"数据"},
+  {id:"cloud",        name:"云",       group:"数据"},
+  {id:"arrow",        name:"箭头",     group:"数据"}
 ];
+const SHAPE_GROUPS = ["基础","流程","数据"];
+let shapeGroup = "基础";
+const shapeName = id => (SHAPES.find(s => s.id === id) || {}).name || "矩形";
+const shapeGroupOf = id => (SHAPES.find(s => s.id === id) || {}).group || "基础";
+
+/* 各形状可用于排字的宽度比例，以及文字相对中心的偏移。
+   斜边形状窄、三角形文字要往下压，不然会顶到尖角外面。 */
+const SHAPE_TEXT = {
+  rect:{rx:0.85}, round:{rx:0.85}, textonly:{rx:0.94},
+  circle:{rx:0.66}, ellipse:{rx:0.72}, diamond:{rx:0.56},
+  hexagon:{rx:0.70}, triangle:{rx:0.52, dy:0.20},
+  parallelogram:{rx:0.68}, trapezoid:{rx:0.74, dy:0.05},
+  star:{rx:0.44}, cross:{rx:0.50},
+  document:{rx:0.82, dy:-0.04}, multidoc:{rx:0.78, dy:-0.03},
+  predefined:{rx:0.74}, delay:{rx:0.68, dx:-0.05},
+  display:{rx:0.64, dx:0.04}, merge:{rx:0.48, dy:0.14},
+  or:{rx:0.64}, sort:{rx:0.54}, card:{rx:0.80}, speech:{rx:0.74, dy:-0.06},
+  cylinder:{rx:0.80, dy:0.04}, storage:{rx:0.78, dy:0.03},
+  queue:{rx:0.74}, cloud:{rx:0.64, dy:0.02}, arrow:{rx:0.56, dx:-0.08}
+};
+
+/* 一键配色：浅色主题用浅底深边，深色主题用同色透明底，保证对比度 */
+const TONES = ["#2563eb","#7c3aed","#db2777","#dc2626","#ea580c","#ca8a04","#16a34a","#0891b2"];
 
 /* ============================================================
    1. 状态
@@ -383,6 +454,7 @@ const uid = p => p + (++uidSeq).toString(36) + Math.random().toString(36).slice(
 const state = {
   nodes:[], edges:[], notes:[],
   theme:"light",
+  lastShape:"rect",
   view:{tx:0, ty:0, k:1}
 };
 
@@ -428,7 +500,33 @@ function markerId(color){
   return "ar" + String(color).replace(/[^a-zA-Z0-9]/g,"");
 }
 
+/* 两色混合，t=0 取 a，t=1 取 b。用于把品牌色洗成浅底或压成深底 */
+function mixHex(a, b, t){
+  const pa = String(a).replace("#",""), pb = String(b).replace("#","");
+  const ch = i => Math.round(parseInt(pa.substr(i,2),16) * (1-t) + parseInt(pb.substr(i,2),16) * t);
+  return "#" + [0,2,4].map(i => ch(i).toString(16).padStart(2,"0")).join("");
+}
+
 function anchorPoint(n, side){
+  // 内切圆和三角形不占满包围盒，锚点要落在真实轮廓上，否则连线会悬空
+  if(n.shape === "circle"){
+    const r = Math.min(n.w, n.h)/2, cx = n.x + n.w/2, cy = n.y + n.h/2;
+    switch(side){
+      case "l": return {x:cx - r, y:cy};
+      case "r": return {x:cx + r, y:cy};
+      case "t": return {x:cx, y:cy - r};
+      default:  return {x:cx, y:cy + r};
+    }
+  }
+  if(n.shape === "triangle"){
+    const cx = n.x + n.w/2;
+    switch(side){
+      case "l": return {x:n.x + n.w*0.25, y:n.y + n.h*0.5};
+      case "r": return {x:n.x + n.w*0.75, y:n.y + n.h*0.5};
+      case "t": return {x:cx, y:n.y};
+      default:  return {x:cx, y:n.y + n.h};
+    }
+  }
   switch(side){
     case "l": return {x:n.x,          y:n.y + n.h/2};
     case "r": return {x:n.x + n.w,    y:n.y + n.h/2};
@@ -663,41 +761,180 @@ function renderDefs(t){
   let s = "";
   colors.forEach(c => {
     s += `<marker id="${markerId(c)}" viewBox="0 0 10 10" refX="10" refY="5"
-      markerWidth="6.5" markerHeight="6.5" orient="auto">
+      markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="${c}"/></marker>`;
   });
   defs.innerHTML = s;
 }
 
 function nodeShapePath(n, fill, stroke){
-  const {x,y,w,h} = n;
-  const sw = 1.6;
+  const x = n.x, y = n.y, w = n.w, h = n.h;
+  const cx = x + w/2, cy = y + h/2;
+  const sw = n.strokeW || 1.6;
+  const st = n.lineStyle === "none" ? "none" : stroke;
+  const dash = n.lineStyle === "dash" ? ' stroke-dasharray="7 5"' : "";
+  const common = `fill="${fill}" stroke="${st}" stroke-width="${sw}"${dash} stroke-linejoin="round"`;
+  const path = (d, extra) => `<path d="${d}" ${common}${extra || ""}/>`;
+
   switch(n.shape){
-    case "round":
-      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(h/2, 14)}"
-        fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-    case "diamond": {
-      const pts = `${x+w/2},${y} ${x+w},${y+h/2} ${x+w/2},${y+h} ${x},${y+h/2}`;
-      return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}"
-        stroke-width="${sw}" stroke-linejoin="round"/>`;
+    case "round": {
+      const r = Math.min(h/2, 18);
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ${common}/>`;
+    }
+    case "circle": {
+      const r = Math.min(w, h) / 2;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" ${common}/>`;
     }
     case "ellipse":
-      return `<ellipse cx="${x+w/2}" cy="${y+h/2}" rx="${w/2}" ry="${h/2}"
-        fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      return `<ellipse cx="${cx}" cy="${cy}" rx="${w/2}" ry="${h/2}" ${common}/>`;
+    case "diamond":
+      return `<polygon points="${cx},${y} ${x+w},${cy} ${cx},${y+h} ${x},${cy}" ${common}/>`;
+    case "triangle":
+      return `<polygon points="${cx},${y} ${x+w},${y+h} ${x},${y+h}" ${common}/>`;
+    case "hexagon": {
+      const k = Math.min(w*0.20, 34);
+      return `<polygon points="${x+k},${y} ${x+w-k},${y} ${x+w},${cy} ${x+w-k},${y+h} ${x+k},${y+h} ${x},${cy}" ${common}/>`;
+    }
+    case "parallelogram": {
+      const k = Math.min(w*0.18, 32);
+      return `<polygon points="${x+k},${y} ${x+w},${y} ${x+w-k},${y+h} ${x},${y+h}" ${common}/>`;
+    }
+    case "trapezoid": {
+      const k = Math.min(w*0.18, 32);
+      return `<polygon points="${x},${y} ${x+w},${y} ${x+w-k},${y+h} ${x+k},${y+h}" ${common}/>`;
+    }
+    case "star": {
+      const rx = w/2, ry = h/2, ir = 0.42, pts = [];
+      for(let i = 0; i < 10; i++){
+        const a = -Math.PI/2 + i * Math.PI/5;
+        const f = i % 2 ? ir : 1;
+        pts.push(`${(cx + Math.cos(a)*rx*f).toFixed(2)},${(cy + Math.sin(a)*ry*f).toFixed(2)}`);
+      }
+      return `<polygon points="${pts.join(" ")}" ${common}/>`;
+    }
+    case "cross": {
+      const a = Math.min(w*0.34, w/2 - 4), b = Math.min(h*0.34, h/2 - 4);
+      const pts = [
+        [x+a,y],[x+w-a,y],[x+w-a,y+b],[x+w,y+b],[x+w,y+h-b],[x+w-a,y+h-b],
+        [x+w-a,y+h],[x+a,y+h],[x+a,y+h-b],[x,y+h-b],[x,y+b],[x+a,y+b]
+      ].map(p => p.join(",")).join(" ");
+      return `<polygon points="${pts}" ${common}/>`;
+    }
+    case "textonly":
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="none"/>`;
+    case "document": {
+      const wv = Math.min(h*0.16, 14);
+      const d = `M${x},${y} h${w} v${h-wv} c${-w*0.16},${-wv} ${-w*0.30},${wv} ${-w*0.50},0`
+              + ` c${-w*0.16},${-wv} ${-w*0.30},${wv} ${-w*0.50},0 z`;
+      return path(d);
+    }
+    case "multidoc": {
+      const wv = Math.min(h*0.13, 11), o = Math.min(w*0.055, 10);
+      const sheet = (ox, oy) => {
+        const ww = w - o*2;
+        return `M${x+ox},${y+oy} h${ww} v${h-oy-wv} c${-ww*0.16},${-wv} ${-ww*0.30},${wv} ${-ww*0.50},0`
+             + ` c${-ww*0.16},${-wv} ${-ww*0.30},${wv} ${-ww*0.50},0 z`;
+      };
+      const back = `fill="${fill === "none" ? "none" : fill}" stroke="${st}" stroke-width="${sw}" ${dash} stroke-linejoin="round"`;
+      return `<path d="${sheet(o*1.6, o*1.6)}" ${back}/>`
+           + `<path d="${sheet(o*0.8, o*0.8)}" ${back}/>`
+           + `<path d="${sheet(0, 0)}" ${common}/>`;
+    }
+    case "predefined": {
+      const k = Math.min(w*0.10, 16);
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" ${common}/>`
+           + `<path d="M${x+k},${y+1} V${y+h-1} M${x+w-k},${y+1} V${y+h-1}" fill="none" stroke="${st}" stroke-width="${sw}"/>`;
+    }
+    case "delay": {
+      const rx = Math.min(h/2, w*0.42), ry = h/2;
+      return path(`M${x},${y} h${w-rx} a${rx},${ry} 0 0 1 0,${h} h${-(w-rx)} z`);
+    }
+    case "display": {
+      const k = Math.min(w*0.18, h*0.28), rx = Math.min(h/2, w*0.16), ry = h/2;
+      return path(`M${x+k},${y} h${w-k-rx} a${rx},${ry} 0 0 1 0,${h} h${-(w-k-rx)} l${-k},${-h/2} z`);
+    }
+    case "merge":
+      return path(`M${x},${y} h${w} l${-w/2},${h} z`);
+    case "or": {
+      const r = Math.min(w, h) / 2;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" ${common}/>`
+           + `<path d="M${cx-r},${cy} H${cx+r} M${cx},${cy-r} V${cy+r}" fill="none" stroke="${st}" stroke-width="${sw}"/>`;
+    }
+    case "sort": {
+      const k = Math.min(w*0.5, h*0.72);
+      const pts = `${cx},${y} ${x+w},${cy} ${cx},${y+h} ${x},${cy}`;
+      return `<polygon points="${pts}" ${common}/>`
+           + `<path d="M${x+k/2},${cy} H${x+w-k/2}" fill="none" stroke="${st}" stroke-width="${sw}"/>`;
+    }
+    case "card": {
+      const k = Math.min(w*0.16, h*0.28, 26);
+      return path(`M${x},${y} h${w-k} l${k},${k} v${h-k} h${-w} z`);
+    }
+    case "speech": {
+      const r = Math.min(h*0.16, 12), tt = Math.min(h*0.16, 13);
+      const body = h - tt;
+      const tailX = Math.max(14, w*0.14);
+      const d = `M${x+r},${y} h${w-2*r} a${r},${r} 0 0 1 ${r},${r} v${body-2*r}`
+              + ` a${r},${r} 0 0 1 ${-r},${r} h${-tailX} l${-12},${tt} v${-tt}`
+              + ` h${-(w - tailX - 12 - r - r)} a${r},${r} 0 0 1 ${-r},${-r} v${-(body-2*r)}`
+              + ` a${r},${r} 0 0 1 ${r},${-r} z`;
+      return path(d);
+    }
     case "cylinder": {
       const ry = Math.min(13, h*0.16);
-      return `<path d="M${x},${y+ry}
-        a${w/2},${ry} 0 0 1 ${w},0
-        v${h-ry*2}
-        a${w/2},${ry} 0 0 1 ${-w},0 z"
-        fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>
+      return `<path d="M${x},${y+ry} a${w/2},${ry} 0 0 1 ${w},0 v${h-ry*2}
+        a${w/2},${ry} 0 0 1 ${-w},0 z" fill="${fill}" stroke="${st}" stroke-width="${sw}"${dash} stroke-linejoin="round"/>
         <path d="M${x},${y+ry} a${w/2},${ry} 0 0 0 ${w},0"
-        fill="none" stroke="${stroke}" stroke-width="${sw}"/>`;
+        fill="none" stroke="${st}" stroke-width="${sw}"/>`;
     }
+    case "storage": {
+      const k = Math.min(w*0.16, 18), j = Math.min(h*0.22, 16);
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" ${common}/>`
+           + `<path d="M${x},${y+j} H${x+w} M${x+k},${y} V${y+h}" fill="none" stroke="${st}" stroke-width="${sw}"/>`;
+    }
+    case "queue": {
+      const rx = Math.min(h/2, w*0.30), ry = h/2;
+      const d = `M${x+rx},${y} h${w-2*rx} a${rx},${ry} 0 0 1 0,${h} h${-(w-2*rx)} a${rx},${ry} 0 0 1 0,${-h} z`;
+      return path(d);
+    }
+    case "cloud": {
+      const X = t => x + w * t, Y = t => y + h * t;
+      const d = `M${X(0.22)},${Y(0.94)}`
+              + ` C${X(0.03)},${Y(0.94)} ${X(0.00)},${Y(0.62)} ${X(0.17)},${Y(0.53)}`
+              + ` C${X(0.12)},${Y(0.22)} ${X(0.44)},${Y(0.12)} ${X(0.54)},${Y(0.34)}`
+              + ` C${X(0.68)},${Y(0.06)} ${X(0.96)},${Y(0.22)} ${X(0.88)},${Y(0.50)}`
+              + ` C${X(0.99)},${Y(0.60)} ${X(0.98)},${Y(0.94)} ${X(0.78)},${Y(0.94)} z`;
+      return path(d);
+    }
+    case "arrow":
+      return path(`M${x},${y+h*0.26} h${w*0.58} v${-h*0.26} l${w*0.42},${h*0.5}`
+                + ` l${-w*0.42},${h*0.5} v${-h*0.26} h${-w*0.58} z`);
     default:
-      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6"
-        fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" ${common}/>`;
   }
+}
+
+/* 各形状的可用排字区域（宽度比例 + 相对中心的偏移） */
+function shapeTextBox(n){
+  const m = SHAPE_TEXT[n.shape] || {};
+  const k = m.rx || 0.85;
+  return {
+    innerW: Math.max(36, n.w * k),
+    dx: (m.dx || 0) * n.w,
+    dy: (m.dy || 0) * n.h
+  };
+}
+
+/* 面板里的形状预览图标：拿同一套几何画一遍，24x18 的画框 */
+function shapeIcon(id){
+  if(id === "textonly"){
+    return `<svg class="shico" viewBox="0 0 28 20" aria-hidden="true">
+      <text x="14" y="15" text-anchor="middle" font-size="14"
+        font-family="Georgia,'Times New Roman',serif" fill="currentColor">T</text></svg>`;
+  }
+  const fake = {x:4, y:4, w:20, h:12, shape:id, strokeW:1.5};
+  return `<svg class="shico" viewBox="0 0 28 20" aria-hidden="true">
+    ${nodeShapePath(fake, "none", "currentColor")}</svg>`;
 }
 
 // 文字超出节点高度时自动撑高（只增不减）。
@@ -705,11 +942,9 @@ function nodeShapePath(n, fill, stroke){
 function fitNodeHeight(n){
   if(!n) return;
   const fs = n.fontSize || 14;
-  let innerW = n.w - 26;
-  if(n.shape === "diamond") innerW = n.w * 0.62;
-  if(n.shape === "ellipse") innerW = n.w * 0.78;
-  const lines = wrapText(n.text, Math.max(40, innerW), fs);
-  const need = Math.ceil(lines.length * fs * 1.42 + 20);
+  const box = shapeTextBox(n);
+  const lines = wrapText(n.text, box.innerW, fs);
+  const need = Math.ceil(lines.length * fs * 1.42 + 20 + Math.abs(box.dy) * 2);
   if(need > n.h) n.h = need;
 }
 
@@ -733,20 +968,24 @@ function renderNode(n, t){
   const txtCol = n.textColor || t.nodeText;
   const isSel  = sel.has("node:"+n.id);
   const fs = n.fontSize || 14;
+  const box = shapeTextBox(n);
 
-  let innerW = n.w - 26;
-  if(n.shape === "diamond") innerW = n.w * 0.62;
-  if(n.shape === "ellipse") innerW = n.w * 0.78;
-
-  const lines = wrapText(n.text, innerW, fs);
+  const lines = wrapText(n.text, box.innerW, fs);
   const lh = fs * 1.42;
   const totalH = lines.length * lh;
-  const cx = n.x + n.w/2;
-  const startY = n.y + n.h/2 - totalH/2 + lh/2;
+  const cx = n.x + n.w/2 + box.dx;
+  const startY = n.y + n.h/2 + box.dy - totalH/2 + lh/2;
+
+  const al = n.align || "center";
+  const anchor = al === "left" ? "start" : al === "right" ? "end" : "middle";
+  const tx = al === "left" ? n.x + (n.w - box.innerW)/2
+           : al === "right" ? n.x + n.w - (n.w - box.innerW)/2
+           : cx;
+  const weight = n.bold ? ' font-weight="600"' : "";
 
   const textSvg = lines.map((ln, i) =>
-    `<text x="${cx}" y="${startY + i*lh}" text-anchor="middle"
-      dominant-baseline="central" font-family='${FONT}' font-size="${fs}"
+    `<text x="${tx}" y="${startY + i*lh}" text-anchor="${anchor}"
+      dominant-baseline="central" font-family='${FONT}' font-size="${fs}"${weight}
       fill="${txtCol}">${esc(ln)}</text>`
   ).join("");
 
@@ -779,29 +1018,26 @@ function renderEdge(e, t){
 
   const p1 = anchorPoint(a, s1);
   const p2 = anchorPoint(b, s2);
-  const dist = Math.hypot(p2.x-p1.x, p2.y-p1.y);
-  const d = Math.max(46, dist * 0.42);
-
-  const c1 = ctrlPoint(p1, s1, d);
-  const c2 = ctrlPoint(p2, s2, d);
+  const {path, mid} = edgeRoutePath(e, p1, s1, p2, s2);
 
   const isSel = sel.has("edge:"+e.id);
   const color = isSel ? t.sel : (e.color || t.edge);
   const dash  = e.dashed ? 'stroke-dasharray="7 5"' : "";
-  const sw    = isSel ? 2.6 : 1.9;
+  const base  = Math.max(0.6, e.width || 1.9);
+  const sw    = isSel ? base + 0.9 : base;
+  const head  = e.head || "end";
+  const mEnd  = head === "none" ? "" : ` marker-end="url(#${markerId(color)})"`;
+  const mStart= head === "both" ? ` marker-start="url(#${markerId(color)})"` : "";
 
-  const path = `M${p1.x},${p1.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${p2.x},${p2.y}`;
-
-  // 标签放在曲线中点
+  // 标签放在路径中点
   let labelSvg = "";
   if(e.label){
-    const m = bezierPoint(p1, c1, c2, p2, 0.5);
     const fs = 11.5;
     const lw = Array.from(e.label).reduce((s,ch) => s + charWidth(ch, fs), 0) + 14;
     labelSvg = `
-      <rect x="${m.x - lw/2}" y="${m.y - 10}" width="${lw}" height="20" rx="5"
+      <rect x="${mid.x - lw/2}" y="${mid.y - 10}" width="${lw}" height="20" rx="5"
         fill="${t.edgeBg}" stroke="${isSel ? t.sel : "none"}" stroke-width="1" opacity=".96"/>
-      <text x="${m.x}" y="${m.y}" text-anchor="middle" dominant-baseline="central"
+      <text x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="central"
         font-family='${FONT}' font-size="${fs}" fill="${isSel ? t.sel : t.edgeText}">${esc(e.label)}</text>`;
   }
 
@@ -809,9 +1045,85 @@ function renderEdge(e, t){
   return `<g class="edge" data-kind="edge" data-id="${e.id}">
     <path d="${path}" fill="none" stroke="transparent" stroke-width="16" style="cursor:pointer"/>
     <path d="${path}" fill="none" stroke="${color}" stroke-width="${sw}"
-      ${dash} marker-end="url(#${markerId(color)})"/>
+      ${dash}${mEnd}${mStart} stroke-linecap="round"/>
     ${labelSvg}
   </g>`;
+}
+
+/* 三种走线方式：曲线 / 直角折线 / 直线 */
+function edgeRoutePath(e, p1, s1, p2, s2){
+  const route = e.route || "curve";
+  if(route === "straight"){
+    return {path:`M${p1.x},${p1.y} L${p2.x},${p2.y}`,
+            mid:{x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2}};
+  }
+  if(route === "ortho"){
+    const pts = orthoPoints(p1, s1, p2, s2);
+    return {path: roundedPath(pts, 10), mid: polyMid(pts)};
+  }
+  const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const d = Math.max(46, dist * 0.42);
+  const c1 = ctrlPoint(p1, s1, d);
+  const c2 = ctrlPoint(p2, s2, d);
+  return {
+    path:`M${p1.x},${p1.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${p2.x},${p2.y}`,
+    mid: bezierPoint(p1, c1, c2, p2, 0.5)
+  };
+}
+
+function orthoPoints(p1, s1, p2, s2){
+  const h1 = s1 === "l" || s1 === "r";
+  const h2 = s2 === "l" || s2 === "r";
+  let pts;
+  if(h1 && h2){
+    const mx = (p1.x + p2.x) / 2;
+    pts = [p1, {x:mx, y:p1.y}, {x:mx, y:p2.y}, p2];
+  } else if(!h1 && !h2){
+    const my = (p1.y + p2.y) / 2;
+    pts = [p1, {x:p1.x, y:my}, {x:p2.x, y:my}, p2];
+  } else {
+    pts = [p1, h1 ? {x:p2.x, y:p1.y} : {x:p1.x, y:p2.y}, p2];
+  }
+  // 去掉重叠点，避免零长度线段算不出圆角
+  const out = [];
+  pts.forEach(p => {
+    const last = out[out.length-1];
+    if(!last || Math.abs(last.x - p.x) > 0.5 || Math.abs(last.y - p.y) > 0.5) out.push(p);
+  });
+  return out;
+}
+
+function roundedPath(pts, radius){
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for(let i = 1; i < pts.length - 1; i++){
+    const p0 = pts[i-1], p1 = pts[i], p2 = pts[i+1];
+    const l1 = Math.hypot(p1.x-p0.x, p1.y-p0.y);
+    const l2 = Math.hypot(p2.x-p1.x, p2.y-p1.y);
+    const r = Math.min(radius, l1/2, l2/2);
+    if(r < 1){ d += ` L${p1.x},${p1.y}`; continue; }
+    const a1 = {x:p1.x + (p0.x-p1.x)*r/l1, y:p1.y + (p0.y-p1.y)*r/l1};
+    const a2 = {x:p1.x + (p2.x-p1.x)*r/l2, y:p1.y + (p2.y-p1.y)*r/l2};
+    d += ` L${a1.x.toFixed(1)},${a1.y.toFixed(1)} Q${p1.x},${p1.y} ${a2.x.toFixed(1)},${a2.y.toFixed(1)}`;
+  }
+  const last = pts[pts.length-1];
+  d += ` L${last.x},${last.y}`;
+  return d;
+}
+
+function polyMid(pts){
+  let total = 0;
+  for(let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+  let acc = 0;
+  for(let i = 1; i < pts.length; i++){
+    const seg = Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    if(acc + seg >= total/2){
+      const f = seg ? (total/2 - acc) / seg : 0;
+      return {x: pts[i-1].x + (pts[i].x-pts[i-1].x)*f,
+              y: pts[i-1].y + (pts[i].y-pts[i-1].y)*f};
+    }
+    acc += seg;
+  }
+  return pts[pts.length-1];
 }
 
 function renderNote(n, t){
@@ -1045,7 +1357,7 @@ function loadLocal(){
    8. 模板
    ============================================================ */
 const BASE_NODE = () => ({id:"", x:0, y:0, w:170, h:64, text:"新节点",
-  shape:"rect", fill:"", stroke:"", textColor:"", fontSize:14});
+  shape: state.lastShape || "rect", fill:"", stroke:"", textColor:"", fontSize:14});
 
 function mkNode(o){
   return Object.assign(BASE_NODE(), o, {id: uid("n")});
@@ -1691,6 +2003,12 @@ svg.addEventListener("contextmenu", ev => {
   if(kind === "edge"){
     if(!sel.has("edge:" + id)) selectOnly("edge", id);
     const e = state.edges.find(x => x.id === id);
+    const setProp = (k, v) => {
+      if(!e) return;
+      e[k] = v;
+      render(); renderInspector(); pushHistory(); saveLocal();
+    };
+    const mark = (k, v) => (e && (e[k] || (k === "route" ? "curve" : "end")) === v) ? "✓ " : "";
     openMenu(null, [
       {label:"编辑标签", fn: () => { if(e) startEdit(e, "edge"); }},
       {label: e && e.dashed ? "改为实线" : "改为虚线", fn: () => {
@@ -1704,6 +2022,16 @@ svg.addEventListener("contextmenu", ev => {
         const s = e.fromSide; e.fromSide = e.toSide; e.toSide = s;
         render(); pushHistory(); saveLocal();
       }},
+      {sep:true},
+      {head:"走线方式"},
+      {label: mark("route","curve") + "曲线", fn: () => setProp("route", "curve")},
+      {label: mark("route","ortho") + "直角折线", fn: () => setProp("route", "ortho")},
+      {label: mark("route","straight") + "直线", fn: () => setProp("route", "straight")},
+      {sep:true},
+      {head:"箭头"},
+      {label: mark("head","end") + "单向", fn: () => setProp("head", "end")},
+      {label: mark("head","both") + "双向", fn: () => setProp("head", "both")},
+      {label: mark("head","none") + "无箭头", fn: () => setProp("head", "none")},
       {sep:true},
       {label:"删除连线", k:"Del", fn: deleteSelection}
     ], at);
@@ -1849,7 +2177,8 @@ function renderInspector(){
         <b>拖节点四边圆点</b> 拉出连线<br>
         <b>Shift + 拖动</b> 框选多个<br>
         <b>空格 + 拖拽</b> 平移画布<br>
-        <b>滚轮</b> 缩放
+        <b>滚轮</b> 缩放<br>
+        <b>选中节点</b> 右侧可换 <b>27 种形状</b>
       </div>
       <div class="insp-sec">
         <div class="insp-title">统计</div>
@@ -1886,11 +2215,18 @@ function renderNodePanel(n){
       <label style="padding-top:6px">文字</label>
       <div class="grow"><textarea id="pText" data-prop="text">${esc(n.text)}</textarea></div>
     </div>
-    <div class="field">
-      <label>形状</label>
-      <div class="grow pill-grid" id="pShape">
-        ${SHAPES.map(s => `<button class="pill ${n.shape === s.id ? "on" : ""}"
-          data-shape="${s.id}">${s.name}</button>`).join("")}
+    <div class="field" style="align-items:flex-start">
+      <label style="padding-top:6px">形状</label>
+      <div class="grow">
+        <div class="shape-tabs">
+          ${SHAPE_GROUPS.map(g => `<button class="stab ${shapeGroup === g ? "on" : ""}"
+            data-sgroup="${g}">${g}</button>`).join("")}
+        </div>
+        <div class="shape-grid" id="pShape">
+          ${SHAPES.filter(s => s.group === shapeGroup).map(s =>
+            `<button class="spill ${n.shape === s.id ? "on" : ""}" data-shape="${s.id}"
+              title="${s.name}">${shapeIcon(s.id)}<em>${s.name}</em></button>`).join("")}
+        </div>
       </div>
     </div>
     <div class="insp-sec">
@@ -1909,7 +2245,33 @@ function renderNodePanel(n){
       </div>
     </div>
     <div class="insp-sec">
+      <div class="insp-title">样式</div>
+      <div class="field"><label>边框</label><div class="grow pills">
+        <button class="pill ${!n.lineStyle ? "on" : ""}" data-lstyle="">实线</button>
+        <button class="pill ${n.lineStyle === "dash" ? "on" : ""}" data-lstyle="dash">虚线</button>
+        <button class="pill ${n.lineStyle === "none" ? "on" : ""}" data-lstyle="none">无边</button>
+      </div></div>
+      <div class="row2">
+        <div class="field"><label>线宽</label><div class="grow">
+          <input type="number" data-prop="strokeW" value="${n.strokeW || 1.6}"
+            min="0.5" max="8" step="0.5"></div></div>
+        <div class="field"><label>字号</label><div class="grow">
+          <input type="number" data-prop="fontSize" value="${n.fontSize || 14}"
+            min="8" max="48" step="1"></div></div>
+      </div>
+      <div class="field"><label>文字</label><div class="grow pills">
+        <button class="pill ${(n.align || "center") === "left" ? "on" : ""}" data-talign="left">左</button>
+        <button class="pill ${(n.align || "center") === "center" ? "on" : ""}" data-talign="center">中</button>
+        <button class="pill ${(n.align || "center") === "right" ? "on" : ""}" data-talign="right">右</button>
+        <button class="pill ${n.bold ? "on" : ""}" data-bold="1" style="font-weight:700">B</button>
+      </div></div>
+    </div>
+    <div class="insp-sec">
       <div class="insp-title">配色</div>
+      <div class="field"><label>色板</label><div class="grow tones">
+        ${TONES.map(c => `<button class="tone" data-tone="${c}" title="套用 ${c}"
+          style="background:${c}"></button>`).join("")}
+      </div></div>
       <div class="field"><label>填充</label><div class="grow">
         <input type="color" data-prop="fill" value="${n.fill || t.nodeFill}"></div></div>
       <div class="field"><label>边框</label><div class="grow">
@@ -1948,6 +2310,25 @@ function renderEdgePanel(e){
           <button class="pill ${e.dashed ? "on" : ""}" data-dash="1">虚线</button>
         </div>
       </div>
+      <div class="field">
+        <label>走线</label>
+        <div class="grow pills">
+          <button class="pill ${(e.route || "curve") === "curve" ? "on" : ""}" data-route="curve">曲线</button>
+          <button class="pill ${e.route === "ortho" ? "on" : ""}" data-route="ortho">直角</button>
+          <button class="pill ${e.route === "straight" ? "on" : ""}" data-route="straight">直线</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>箭头</label>
+        <div class="grow pills">
+          <button class="pill ${(e.head || "end") === "end" ? "on" : ""}" data-head="end">单向</button>
+          <button class="pill ${e.head === "both" ? "on" : ""}" data-head="both">双向</button>
+          <button class="pill ${e.head === "none" ? "on" : ""}" data-head="none">无</button>
+        </div>
+      </div>
+      <div class="field"><label>线宽</label><div class="grow">
+        <input type="number" data-prop="width" value="${e.width || 1.9}"
+          min="0.5" max="8" step="0.5"></div></div>
       <div class="field"><label>颜色</label><div class="grow">
         <input type="color" data-prop="color" value="${e.color || t.edge}"></div></div>
       <button class="btn-block" data-act="resetColor">跟随主题颜色</button>
@@ -2035,6 +2416,8 @@ inspector.addEventListener("input", ev => {
     else if(prop === "h") n.h = Math.max(28, +el.value || 28);
     else if(prop === "x") n.x = +el.value || 0;
     else if(prop === "y") n.y = +el.value || 0;
+    else if(prop === "fontSize"){ n.fontSize = Math.min(48, Math.max(8, +el.value || 14)); fitNodeHeight(n); }
+    else if(prop === "strokeW") n.strokeW = Math.min(8, Math.max(0.5, +el.value || 1.6));
     else if(prop === "fill") n.fill = el.value;
     else if(prop === "stroke") n.stroke = el.value;
     else if(prop === "textColor") n.textColor = el.value;
@@ -2043,6 +2426,7 @@ inspector.addEventListener("input", ev => {
     const e = state.edges.find(x => x.id === eIds[0]); if(!e) return;
     if(prop === "label") e.label = el.value;
     else if(prop === "color") e.color = el.value;
+    else if(prop === "width") e.width = Math.min(8, Math.max(0.5, +el.value || 1.9));
     else if(prop === "fromSide") e.fromSide = el.value;
     else if(prop === "toSide") e.toSide = el.value;
     render(); saveLocal();
@@ -2070,14 +2454,52 @@ inspector.addEventListener("focusout", () => {
 });
 
 inspector.addEventListener("click", ev => {
+  const groupBtn = ev.target.closest("[data-sgroup]");
+  if(groupBtn){
+    shapeGroup = groupBtn.dataset.sgroup;
+    renderInspector();
+    return;
+  }
   const shapeBtn = ev.target.closest("[data-shape]");
   if(shapeBtn){
     const id = selList("node")[0];
     const n = byId(id);
     if(n){
       n.shape = shapeBtn.dataset.shape;
+      state.lastShape = n.shape;
       if(n.shape === "diamond" && n.h < 80) n.h = 80;
-      render(); renderInspector(); pushHistory();
+      fitNodeHeight(n);
+      render(); renderInspector(); pushHistory(); saveLocal();
+    }
+    return;
+  }
+  const lsBtn = ev.target.closest("[data-lstyle]");
+  if(lsBtn){
+    const n = byId(selList("node")[0]);
+    if(n){ n.lineStyle = lsBtn.dataset.lstyle; render(); renderInspector(); pushHistory(); }
+    return;
+  }
+  const taBtn = ev.target.closest("[data-talign]");
+  if(taBtn){
+    const n = byId(selList("node")[0]);
+    if(n){ n.align = taBtn.dataset.talign; render(); renderInspector(); pushHistory(); }
+    return;
+  }
+  const boldBtn = ev.target.closest("[data-bold]");
+  if(boldBtn){
+    const n = byId(selList("node")[0]);
+    if(n){ n.bold = !n.bold; fitNodeHeight(n); render(); renderInspector(); pushHistory(); }
+    return;
+  }
+  const toneBtn = ev.target.closest("[data-tone]");
+  if(toneBtn){
+    const n = byId(selList("node")[0]);
+    if(n){
+      const c = toneBtn.dataset.tone;
+      n.stroke = c;
+      n.fill = state.theme === "dark" ? mixHex(c, "#0b1420", .80) : mixHex(c, "#ffffff", .90);
+      n.textColor = "";
+      render(); renderInspector(); pushHistory(); saveLocal();
     }
     return;
   }
@@ -2086,6 +2508,18 @@ inspector.addEventListener("click", ev => {
     const id = selList("edge")[0];
     const e = state.edges.find(x => x.id === id);
     if(e){ e.dashed = dashBtn.dataset.dash === "1"; render(); renderInspector(); pushHistory(); }
+    return;
+  }
+  const routeBtn = ev.target.closest("[data-route]");
+  if(routeBtn){
+    const e = state.edges.find(x => x.id === selList("edge")[0]);
+    if(e){ e.route = routeBtn.dataset.route; render(); renderInspector(); pushHistory(); }
+    return;
+  }
+  const headBtn = ev.target.closest("[data-head]");
+  if(headBtn){
+    const e = state.edges.find(x => x.id === selList("edge")[0]);
+    if(e){ e.head = headBtn.dataset.head; render(); renderInspector(); pushHistory(); }
     return;
   }
   const alignBtn = ev.target.closest("[data-align]");
@@ -2697,7 +3131,10 @@ function showHelp(){
     ["<kbd>F</kbd>", "适配视图（全图居中）"],
     ["<kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>E</kbd>", "导出 JSON / 导出 PNG"],
     ["<kbd>Esc</kbd>", "取消选择 / 退出当前工具"],
-    ["<kbd>右键</kbd>", "上下文菜单：复制、置顶置底、改线型、粘贴、导出"]
+    ["<kbd>右键</kbd>", "上下文菜单：复制、置顶置底、改线型/走线/箭头、粘贴、导出"],
+    ["<kbd>右侧 · 形状</kbd>", "基础 / 流程 / 数据三组共 27 种形状，图标即实物"],
+    ["<kbd>右侧 · 连线</kbd>", "曲线 / 直角折线 / 直线，单向 / 双向 / 无箭头，线宽可调"],
+    ["<kbd>右侧 · 样式</kbd>", "边框实/虚/无边、线宽、字号、加粗、左中右对齐、一键配色"]
   ];
   modalEl.innerHTML = `
     <button class="btn icon modal-close" id="modalClose">✕</button>
@@ -2753,6 +3190,15 @@ function boot(){
 }
 
 window.addEventListener("resize", () => { applyView(); });
+
+/* 调试句柄：自动化测试与二次开发可以直接读写状态，不影响正常使用 */
+window.FF = {
+  get state(){ return state; },
+  get sel(){ return sel; },
+  SHAPES, render, renderInspector, fitView, selectOnly, clearSelect,
+  mkNode, mkEdge, undo, redo
+};
+
 boot();
 
 })();

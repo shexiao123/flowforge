@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/ui.test.mjs && node tests/io.test.mjs && node tests/features.test.mjs"
+    "test": "node tests/ui.test.mjs && node tests/io.test.mjs && node tests/features.test.mjs && node tests/shapes.test.mjs",
+    "test:shapes": "node tests/shapes.test.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^23.11.1"
