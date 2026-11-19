@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
+const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href + '#editor';
 
 const CANDIDATES = [
   process.env.CHROME_PATH,

@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
+const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href + '#editor';
 
 const CANDIDATES = [
   process.env.CHROME_PATH,
@@ -48,7 +48,7 @@ const first = await page.evaluate(() => ({
   active: !!FF.activeDocId,
   idx: !!localStorage.getItem('flowforge_docs_v1'),
   title: document.title,
-  badge: document.querySelector('#curDocName')?.textContent
+  badge: document.querySelector('#tabBar .tab.on .tab-name')?.textContent
 }));
 ok('K1 首次打开自动建立一份文件并存索引',
   first.docs === 1 && first.active && first.idx && first.name === '示例 · 审批流程',
@@ -96,7 +96,7 @@ ok('K5 改动 400ms 内自动落到本地存档', persisted);
 const renamed = await page.evaluate(() => {
   const id = FF.docs.find(d => d.name === '第二份图').id;
   FF.renameDoc(id, '季度复盘');
-  return { names: FF.docs.map(d => d.name), badge: document.querySelector('#curDocName').textContent };
+  return { names: FF.docs.map(d => d.name), badge: document.querySelector('#tabBar .tab.on .tab-name').textContent };
 });
 ok('K6 重命名同步到索引与顶栏',
   renamed.names.includes('季度复盘') && renamed.badge === '季度复盘',
@@ -222,7 +222,7 @@ const afterReload = await page.evaluate(() => ({
   id: FF.activeDocId,
   name: FF.docs[0].name,
   nodes: FF.state.nodes.length,
-  badge: document.querySelector('#curDocName').textContent
+  badge: document.querySelector('#tabBar .tab.on .tab-name').textContent
 }));
 ok('K16 刷新后回到上次的文件与内容',
   afterReload.id === beforeReload.id && afterReload.nodes === beforeReload.nodes && afterReload.badge === afterReload.name,

@@ -210,13 +210,13 @@ html[data-theme="dark"] .btn-block.danger:hover{background:#1f1114}
 
 /* ---------- 文件抽屉 ---------- */
 .drawer-mask{
-  position:fixed;left:52px;top:52px;right:0;bottom:26px;z-index:70;
+  position:fixed;left:52px;top:86px;right:0;bottom:26px;z-index:70;
   background:rgba(15,23,42,.26);opacity:0;pointer-events:none;transition:opacity .16s;
 }
 html[data-theme="dark"] .drawer-mask{background:rgba(0,0,0,.5)}
 .drawer-mask.on{opacity:1;pointer-events:auto}
 .file-drawer{
-  position:fixed;left:52px;top:52px;bottom:26px;width:312px;z-index:71;
+  position:fixed;left:52px;top:86px;bottom:26px;width:312px;z-index:71;
   background:var(--panel);border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   transform:translateX(calc(-100% - 53px));transition:transform .2s cubic-bezier(.2,.7,.3,1);
@@ -319,6 +319,10 @@ kbd{
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text);margin-right:3px;
 }
 .modal-close{position:sticky;top:0;float:right;margin:-6px -8px 0 0}
+.modal code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+  background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:0 4px;
+}
 
 /* 文字编辑浮层 */
 #editorOverlay{
@@ -340,20 +344,162 @@ kbd{
 }
 html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============================================================
+   工作台
+   ============================================================ */
+.app{display:none;grid-template-rows:52px 34px 1fr 26px;height:100vh}
+body[data-view="editor"] .app{display:grid}
+#workspace{display:none;height:100vh;grid-template-rows:52px 1fr}
+body[data-view="workspace"] #workspace{display:grid}
+
+.ws-body{overflow-y:auto;overflow-x:hidden;padding:26px 30px 56px}
+.ws-inner{max-width:1200px;margin:0 auto}
+
+.ws-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.ws-h1{margin:0;font-size:21px;font-weight:680;letter-spacing:-.2px}
+.ws-sub{margin:5px 0 0;color:var(--dim);font-size:12.5px}
+.ws-sub b{color:var(--text);font-weight:600}
+.ws-tools{margin-left:auto;display:flex;gap:8px;align-items:center}
+.ws-search{
+  width:210px;height:32px;border:1px solid var(--border);background:var(--panel);
+  color:var(--text);border-radius:8px;padding:0 11px;font-size:12.5px;outline:none;
+}
+.ws-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+.ws-sort{
+  height:32px;border:1px solid var(--border);background:var(--panel);color:var(--text);
+  border-radius:8px;padding:0 8px;font-size:12.5px;outline:none;cursor:pointer;
+}
+
+.ws-h2{
+  margin:34px 0 12px;font-size:12px;font-weight:650;color:var(--dim);
+  letter-spacing:.08em;text-transform:uppercase;
+}
+
+/* 文件卡片 */
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(226px,1fr));gap:14px;margin-top:18px}
+.doc-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;cursor:pointer;position:relative;
+  transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;
+}
+.doc-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#c7d2e2}
+html[data-theme="dark"] .doc-card:hover{border-color:#2b3d50}
+.doc-card.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent2)}
+.dc-thumb{
+  height:128px;background-color:var(--panel2);border-bottom:1px solid var(--border);
+  background-image:radial-gradient(circle, rgba(100,116,139,.18) 1px, transparent 1px);
+  background-size:15px 15px;background-position:center;
+  position:relative;overflow:hidden;
+}
+html[data-theme="dark"] .dc-thumb{
+  background-image:radial-gradient(circle, rgba(140,165,192,.14) 1px, transparent 1px);
+}
+.dc-thumb svg{display:block;width:100%;height:100%}
+.dc-thumb svg *{vector-effect:non-scaling-stroke}
+.dc-empty{
+  position:absolute;inset:0;display:grid;place-items:center;
+  color:var(--dim);font-size:11.5px;letter-spacing:.02em;
+}
+.dc-body{padding:10px 12px 11px}
+.dc-name{
+  font-size:13px;font-weight:560;line-height:1.4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px;
+}
+.dc-meta{font-size:11px;color:var(--dim);margin-top:3px;display:flex;align-items:center;gap:6px}
+.dc-meta .dot{opacity:.45}
+.dc-tag{
+  font-size:9.5px;padding:0 5px;border-radius:3px;line-height:15px;
+  background:var(--accent2);color:var(--accent);
+}
+html[data-theme="dark"] .dc-tag{background:#0e2231}
+.dc-more{
+  position:absolute;right:7px;top:7px;width:24px;height:24px;border-radius:6px;
+  display:grid;place-items:center;font-size:14px;line-height:1;color:var(--dim);
+  background:var(--panel);border:1px solid var(--border);opacity:0;
+  transition:opacity .13s,color .13s;z-index:2;
+}
+.doc-card:hover .dc-more{opacity:1}
+.dc-more:hover{color:var(--text);border-color:var(--dim)}
+
+.doc-new{
+  min-height:186px;border:1.5px dashed #cbd5e1;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  color:var(--dim);font-size:12.5px;background:transparent;
+  transition:border-color .14s,color .14s,background .14s;
+}
+html[data-theme="dark"] .doc-new{border-color:#3d4f63}
+.doc-new:hover{border-color:var(--accent);color:var(--accent);background:var(--accent2)}
+.doc-new .plus{font-size:22px;line-height:1;font-weight:300}
+
+.ws-empty{
+  grid-column:1/-1;padding:46px 0;text-align:center;color:var(--dim);font-size:13px;line-height:2;
+}
+
+/* 模板 */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:10px}
+.tpl-card{
+  display:flex;align-items:center;gap:11px;padding:11px 13px;
+  background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:border-color .14s,transform .14s;
+}
+.tpl-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.tpl-ico{
+  width:30px;height:30px;border-radius:8px;background:var(--accent2);color:var(--accent);
+  display:grid;place-items:center;flex:0 0 30px;
+}
+.tpl-ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tpl-name{display:block;font-size:12.5px;font-weight:550;line-height:1.4}
+.tpl-sub{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+
+.ws-foot{
+  margin-top:34px;padding-top:16px;border-top:1px solid var(--border);
+  color:var(--dim);font-size:11.5px;line-height:1.9;
+}
+.ws-foot b{color:var(--text);font-weight:600}
+
+/* 编辑器标签栏 */
+.tabbar{
+  display:flex;align-items:center;gap:3px;padding:0 8px;overflow-x:auto;overflow-y:hidden;
+  background:var(--panel);border-bottom:1px solid var(--border);
+}
+.tabbar::-webkit-scrollbar{height:0}
+.tab{
+  display:flex;align-items:center;gap:5px;height:25px;padding:0 6px 0 10px;flex:0 0 auto;
+  border-radius:7px;font-size:12px;color:var(--dim);cursor:pointer;max-width:200px;
+  transition:background .12s,color .12s;
+}
+.tab:hover{background:var(--hover);color:var(--text)}
+.tab.on{background:var(--accent2);color:var(--accent);font-weight:560}
+.tab-name{max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab-x{
+  width:15px;height:15px;border-radius:4px;font-size:12px;line-height:1;
+  display:grid;place-items:center;color:inherit;opacity:.45;
+}
+.tab-x:hover{background:rgba(100,116,139,.22);opacity:1}
+.tab-new{
+  width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
+  font-size:15px;line-height:1;color:var(--dim);flex:0 0 24px;
+}
+.tab-new:hover{background:var(--hover);color:var(--text)}
+.tab-home{
+  display:flex;align-items:center;gap:5px;height:25px;padding:0 9px;border-radius:7px;
+  font-size:11.5px;color:var(--dim);flex:0 0 auto;margin-right:4px;
+}
+.tab-home:hover{background:var(--hover);color:var(--text)}
+.tab-home svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#btnHome{cursor:pointer;border-radius:7px;padding:4px 6px;margin-left:-6px;transition:background .12s}
+#btnHome:hover{background:var(--hover)}
 </style>
 </head>
-<body>
-<div class="app">
+<body data-view="workspace">
+<div class="app" id="editorApp">
   <header class="topbar">
-    <div class="brand">
+    <div class="brand" id="btnHome" title="返回工作台 (Ctrl+Alt+H)">
       <span class="mark">F</span>
-      FlowForge <small>导流图工作台</small>
+      FlowForge <small>导流图</small>
     </div>
     <div class="tb-group">
-      <button class="btn" id="btnFiles" title="文件储存 (Ctrl+Alt+F)">
-        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-        <span id="curDocName">未命名</span>
-      </button>
       <button class="btn" id="btnTemplates">模板
         <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -381,6 +527,8 @@ html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
       <button class="btn icon" id="btnHelp" title="快捷键 ( ? )">?</button>
     </div>
   </header>
+
+  <div class="tabbar" id="tabBar"></div>
 
   <div class="main">
     <nav class="toolbar" id="toolbar">
@@ -440,6 +588,59 @@ html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
   </footer>
 </div>
 
+<div id="workspace">
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark">F</span>
+      FlowForge <small>工作台</small>
+    </div>
+    <div class="tb-spacer"></div>
+    <div class="tb-group">
+      <button class="btn" id="wsNew">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        新建
+      </button>
+      <button class="btn" id="wsImport">导入
+        <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button class="btn icon" id="wsTheme" title="切换主题">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/><path d="M12 4a8 8 0 010 16z" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button class="btn icon" id="wsHelp" title="快捷键 ( ? )">?</button>
+    </div>
+  </header>
+
+  <div class="ws-body">
+    <div class="ws-inner">
+      <div class="ws-head">
+        <div>
+          <h1 class="ws-h1">我的图</h1>
+          <p class="ws-sub" id="wsStats"></p>
+        </div>
+        <div class="ws-tools">
+          <input class="ws-search" id="wsSearch" placeholder="搜索文件…" spellcheck="false">
+          <select class="ws-sort" id="wsSort">
+            <option value="recent">最近编辑</option>
+            <option value="name">按名称</option>
+            <option value="size">按节点数</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="doc-grid" id="wsGrid"></div>
+
+      <h2 class="ws-h2">从模板开始</h2>
+      <div class="tpl-grid" id="wsTpls"></div>
+
+      <div class="ws-foot">
+        所有文件存在<b>浏览器本地</b>，自动保存，关掉页面不丢。清缓存会删掉，重要的图记得用
+        <b>保存到磁盘</b> 落到自己的文件夹里。<br>
+        同一次打开多份图会以标签页并列，切换不丢状态。
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="menuLayer"><div class="menu" id="menu"></div></div>
 <div id="modalLayer"><div class="modal" id="modal"></div></div>
 <div class="drawer-mask" id="drawerMask"></div>
@@ -484,14 +685,16 @@ const THEMES = {
     nodeFill:"#ffffff", nodeStroke:"#cbd5e1", nodeText:"#1f2937",
     edge:"#94a3b8", edgeText:"#64748b", edgeBg:"#f5f7fa",
     noteFill:"#fef9e2", noteStroke:"#f0d75e", noteText:"#713f12", noteBar:"#f5d24b",
-    mm:"#94a3b8", sel:"#2563eb"
+    mm:"#94a3b8", sel:"#2563eb",
+    thumbFill:"#e8eef8", thumbStroke:"#a9bacf", thumbText:"#9db0c8"
   },
   dark: {
     canvas:"#080d13", grid:"#1a2532",
     nodeFill:"#151e29", nodeStroke:"#2d3c4e", nodeText:"#e6eef8",
     edge:"#5c7086", edgeText:"#93a6bb", edgeBg:"#080d13",
     noteFill:"#33290f", noteStroke:"#8a6d1a", noteText:"#fde68a", noteBar:"#8a6d1a",
-    mm:"#5f7d9c", sel:"#38bdf8"
+    mm:"#5f7d9c", sel:"#38bdf8",
+    thumbFill:"#1b2734", thumbStroke:"#3a5169", thumbText:"#4c6a89"
   }
 };
 
@@ -1493,10 +1696,16 @@ function readDocData(id){
 
 function writeDocData(id, data){
   const src = data || {nodes:state.nodes, edges:state.edges, notes:state.notes, view:state.view};
+  let view = src.view || null;
+  // 在工作台里没有画布尺寸可比，别拿默认视图覆盖掉文档上次的真实视野
+  if(!data && appView !== "editor"){
+    const old = readJSON(DOC_DATA_KEY(id), null);
+    view = (old && old.view) ? old.view : null;
+  }
   return writeJSON(DOC_DATA_KEY(id), {
     name: (docMeta(id) || {}).name || "未命名",
     nodes: src.nodes, edges: src.edges, notes: src.notes,
-    view: src.view || null, savedAt: Date.now()
+    view, savedAt: Date.now()
   });
 }
 
@@ -1556,9 +1765,7 @@ function relTime(ts){
 function updateDocBadge(){
   const m = docMeta(activeDocId);
   const name = m ? m.name : "未命名";
-  const el = $("#curDocName");
-  if(el) el.textContent = name;
-  document.title = "FlowForge · " + name;
+  document.title = appView === "workspace" ? "FlowForge · 工作台" : "FlowForge · " + name;
   const st = $("#stSave");
   if(st){
     // 自动存盘只要 160ms，不闪「未保存」四个字，只用圆点颜色示意
@@ -1573,6 +1780,7 @@ function updateDocBadge(){
       ? "已绑定本地文件 · Ctrl+S 直接写回"
       : (fsSupported() ? "尚未绑定本地文件" : "当前浏览器不支持直接写盘，保存将下载 JSON");
   }
+  renderTabs();
 }
 
 /* ---------- 打开 / 切换 ---------- */
@@ -1592,19 +1800,30 @@ function openDoc(id, data){
   const d = data || readDocData(id);
   activeDocId = id;
   try{ localStorage.setItem(ACTIVE_DOC_KEY, id); }catch(err){}
+  // 只在编辑器里打开才占用标签；工作台里预览不占位
+  if(appView === "editor" && !openTabs.includes(id)) openTabs.push(id);
 
   adoptDocData(d);
   history.stack = [];
   history.idx = -1;
 
-  if(d.view) { state.view = {tx:d.view.tx, ty:d.view.ty, k:d.view.k}; applyView(); }
-  else fitView();
+  if(d.view){
+    state.view = {tx:d.view.tx, ty:d.view.ty, k:d.view.k};
+    applyView();
+    viewReady = true;
+  }else{
+    viewReady = false;
+  }
 
   render(); renderInspector(); updateStatus();
   pushHistory();
   docDirty = false;
   updateDocBadge();
+  renderTabs();
   renderFileList();
+
+  // 在编辑器里切换文件时立即把内容摆正；在工作台里则等用户点进来再算
+  if(appView === "editor" && !viewReady){ fitView(); viewReady = true; }
   return true;
 }
 
@@ -1652,7 +1871,9 @@ function renameDoc(id, name){
     writeDocData(id);
     updateDocBadge();
   }
+  renderTabs();
   renderFileList();
+  if(appView === "workspace") renderWorkspace();
   toast("已重命名为「" + m.name + "」");
 }
 
@@ -1682,12 +1903,14 @@ function deleteDoc(id){
   if(wasActive) activeDocId = "";     // 防止 flushSave 又把内容写回去
   clearTimeout(saveTimer);
   docs = docs.filter(d => d.id !== id);
+  const tabAt = openTabs.indexOf(id);
+  if(tabAt >= 0) openTabs.splice(tabAt, 1);
   saveDocIndex();
   try{ localStorage.removeItem(DOC_DATA_KEY(id)); }catch(err){}
   forgetHandle(id);
 
-  if(wasActive) openDoc(docs[0].id);
-  else renderFileList();
+  if(wasActive) openDoc(openTabs[0] || docs[0].id);
+  else { renderFileList(); renderTabs(); }
   toast("已删除「" + m.name + "」");
 }
 
@@ -1909,6 +2132,7 @@ async function openFromDisk(){
     linkedDocs.add(id);
     updateDocBadge();
     renderFileList();
+    openInEditor(id);
     toast("已打开「" + file.name + "」");
   }catch(err){
     if(err && err.name === "AbortError") return;
@@ -1962,8 +2186,8 @@ function bootDocs(){
   const d = readDocData(activeDocId);
   try{ localStorage.setItem(ACTIVE_DOC_KEY, activeDocId); }catch(err){}
   adoptDocData(d);
-  if(d.view){ state.view = {tx:d.view.tx, ty:d.view.ty, k:d.view.k}; applyView(); }
-  else { resetView(); }
+  if(d.view){ state.view = {tx:d.view.tx, ty:d.view.ty, k:d.view.k}; applyView(); viewReady = true; }
+  else viewReady = false;
 
   updateDocBadge();
   setTimeout(restoreHandles, 60);
@@ -1972,6 +2196,346 @@ function bootDocs(){
 
 /* 兼容旧调用名 */
 function loadLocal(){ return false; }
+
+/* ============================================================
+   7.5 工作台
+   ------------------------------------------------------------
+   两种视图：workspace（文件总览）/ editor（画布）。
+   工作台不是摆设——文件卡片直接从存档渲染缩略图，
+   点卡片进编辑器，标签栏保留同时打开的多份图。
+   ============================================================ */
+let appView = "workspace";
+let viewReady = false;          // 当前文档的视图是否已经算过
+let wsQuery = "", wsSort = "recent";
+const openTabs = [];
+const docCache = new Map();     // docId -> {stamp, data}
+
+const TPL_DESC = {
+  approval: "分级审批到归档",
+  pipeline: "采集到报表全链路",
+  funnel: "各环节转化率",
+  arch: "服务与调用关系"
+};
+const TPL_ICO = {
+  approval: '<path d="M5 12h4l2.5-5 3 10L17 12h3"/>',
+  pipeline: '<path d="M4 7h16M4 12h11M4 17h7"/>',
+  funnel: '<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
+  arch: '<rect x="3.5" y="3.5" width="6" height="6" rx="1.4"/><rect x="14.5" y="14.5" width="6" height="6" rx="1.4"/><path d="M9.5 6.5h5v8"/>'
+};
+
+/* 读文档并缓存，索引里的 updated 变了就重新读 */
+function docData(d){
+  const hit = docCache.get(d.id);
+  if(hit && hit.stamp === d.updated) return hit.data;
+  const data = readDocData(d.id);
+  docCache.set(d.id, {stamp:d.updated, data});
+  return data;
+}
+
+/* 缩略图：复用真实形状路径，按内容包围盒缩放到卡片里 */
+function thumbMarkup(d){
+  const t = THEMES[state.theme] || THEMES.light;
+  const W = 360, H = 200, pad = 14;
+  const nodes = d.nodes || [], notes = d.notes || [];
+  if(nodes.length === 0 && notes.length === 0){
+    return `<div class="dc-empty">空白画布</div>`;
+  }
+
+  let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+  const add = (x, y, w, h) => {
+    x1 = Math.min(x1, x); y1 = Math.min(y1, y);
+    x2 = Math.max(x2, x + w); y2 = Math.max(y2, y + h);
+  };
+  nodes.forEach(n => add(n.x, n.y, n.w, n.h));
+  notes.forEach(n => add(n.x, n.y, n.w, n.h));
+
+  const bw = Math.max(1, x2 - x1), bh = Math.max(1, y2 - y1);
+  const k = Math.min((W - pad * 2) / bw, (H - pad * 2) / bh, 1.2);
+  const ox = (W - bw * k) / 2 - x1 * k;
+  const oy = (H - bh * k) / 2 - y1 * k;
+
+  const centerOf = id => {
+    const n = nodes.find(x => x.id === id);
+    return n ? {x: n.x + n.w / 2, y: n.y + n.h / 2} : null;
+  };
+
+  let edges = "";
+  (d.edges || []).forEach(e => {
+    const a = centerOf(e.from), b = centerOf(e.to);
+    if(!a || !b) return;
+    edges += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"
+      stroke="${e.color || t.thumbStroke}" stroke-width="2" stroke-linecap="round" opacity=".9"/>`;
+  });
+
+  // 缩略图不画真文字（小到看不清），用两条短横线示意文字位置，缩略图读起来才像一张图
+  const textBars = nodes.map(n => {
+    if(n.w < 60 || n.h < 34) return "";
+    const cx = n.x + n.w / 2, cy = n.y + n.h / 2;
+    const bw = Math.min(n.w * 0.44, 90), bh = Math.max(4, n.h * 0.09);
+    return `<rect x="${(cx - bw/2).toFixed(1)}" y="${(cy - bh/2).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bh/2).toFixed(1)}" fill="${t.thumbText}"/>`;
+  }).join("");
+
+  const shapes = nodes.map(n =>
+    nodeShapePath(n, n.fill || t.thumbFill, n.stroke || t.thumbStroke)).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <g transform="translate(${ox.toFixed(2)},${oy.toFixed(2)}) scale(${k.toFixed(4)})">${edges}${shapes}${textBars}</g>
+  </svg>`;
+}
+
+function docCard(d){
+  const linked = linkedDocs.has(d.id);
+  const data = docData(d);
+  return `<article class="doc-card${d.id === activeDocId ? " on" : ""}" data-id="${d.id}">
+    <div class="dc-thumb">${thumbMarkup({nodes:data.nodes, edges:data.edges, notes:data.notes})}</div>
+    <div class="dc-body">
+      <div class="dc-name" title="${esc(d.name)}">${esc(d.name)}</div>
+      <div class="dc-meta">
+        <span>${d.count || 0} 个节点</span>
+        <span class="dot">·</span>
+        <span>${relTime(d.updated)}</span>
+        ${linked ? `<span class="dc-tag">磁盘</span>` : ""}
+      </div>
+    </div>
+    <button class="dc-more" title="更多操作">⋯</button>
+  </article>`;
+}
+
+function renderWorkspace(){
+  const grid = $("#wsGrid");
+  if(!grid) return;
+
+  const total = docs.reduce((s, d) => s + (d.count || 0), 0);
+  const last = docs.reduce((m, d) => Math.max(m, d.updated || 0), 0);
+  $("#wsStats").innerHTML =
+    `<b>${docs.length}</b> 份文件 · <b>${total}</b> 个节点 · 最近编辑 ${relTime(last)}`;
+
+  const kw = wsQuery.trim().toLowerCase();
+  let list = docs.slice();
+  if(kw) list = list.filter(d => d.name.toLowerCase().includes(kw));
+  if(wsSort === "name") list.sort((a, b) => a.name.localeCompare(b.name, "zh"));
+  else if(wsSort === "size") list.sort((a, b) => (b.count || 0) - (a.count || 0));
+  else list.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+
+  const empty = list.length === 0
+    ? `<div class="ws-empty">没有名字里带「${esc(kw)}」的文件<br>换个词，或直接新建一份</div>`
+    : "";
+
+  grid.innerHTML = list.map(docCard).join("") + empty
+    + `<button class="doc-new" id="wsNewCard"><span class="plus">＋</span>新建空白图</button>`;
+
+  renderTemplates();
+}
+
+function renderTemplates(){
+  const box = $("#wsTpls");
+  if(!box) return;
+  box.innerHTML = Object.keys(TEMPLATES).map(k => `
+    <button class="tpl-card" data-tpl="${k}">
+      <span class="tpl-ico"><svg viewBox="0 0 24 24">${TPL_ICO[k] || TPL_ICO.approval}</svg></span>
+      <span>
+        <span class="tpl-name">${TEMPLATES[k].name}</span>
+        <span class="tpl-sub">${TPL_DESC[k] || "一键生成"}</span>
+      </span>
+    </button>`).join("");
+}
+
+/* ---------- 视图切换 ---------- */
+function setView(v){
+  appView = v;
+  document.body.dataset.view = v;
+
+  // 地址栏保持同步（#editor 可以直接进画布）；file:// 下 replaceState 可能被拒，退化为改 hash
+  const target = v === "editor" ? "#editor" : location.pathname + location.search;
+  let done = false;
+  try{ history.replaceState(null, "", target); done = true; }catch(err){}
+  if(!done){
+    try{
+      if(v === "editor") location.hash = "editor";
+      else if(location.hash) location.hash = "";
+    }catch(err){}
+  }
+
+  if(v === "workspace"){
+    flushSave();
+    renderWorkspace();
+    closeDrawer();
+  }else{
+    renderTabs();
+    if(!viewReady){ fitView(); viewReady = true; }
+    else applyView();   // 画布刚从 display:none 恢复，小地图与网格要重算尺寸
+  }
+  updateDocBadge();
+}
+
+function openInEditor(id){
+  if(id && id !== activeDocId) openDoc(id);
+  if(!openTabs.includes(activeDocId)) openTabs.push(activeDocId);
+  setView("editor");
+}
+
+/* ---------- 标签栏 ---------- */
+let tabSig = "";
+
+function renderTabs(){
+  const bar = $("#tabBar");
+  if(!bar) return;
+  const sig = openTabs.map(id => id + ":" + ((docMeta(id) || {}).name || "")).join("|")
+    + "|" + activeDocId;
+  if(sig === tabSig) return;
+  tabSig = sig;
+
+  bar.innerHTML = openTabs.map(id => {
+    const m = docMeta(id);
+    if(!m) return "";
+    return `<div class="tab${id === activeDocId ? " on" : ""}" data-id="${id}" title="${esc(m.name)}">
+      <span class="tab-name">${esc(m.name)}</span>
+      <button class="tab-x" data-close="${id}" title="关闭标签（不删文件）">×</button>
+    </div>`;
+  }).join("")
+  + `<button class="tab-new" id="btnFiles" title="所有文件 (Ctrl+Alt+F)">＋</button>`;
+}
+
+function closeTab(id){
+  const i = openTabs.indexOf(id);
+  if(i < 0) return;
+  openTabs.splice(i, 1);
+  if(id !== activeDocId){ renderTabs(); return; }
+  if(openTabs.length === 0){
+    renderTabs();
+    setView("workspace");
+    return;
+  }
+  openDoc(openTabs[Math.min(i, openTabs.length - 1)]);
+}
+
+/* ---------- 工作台卡片改名 ---------- */
+function startCardRename(id){
+  const card = document.querySelector(`.doc-card[data-id="${id}"]`);
+  const el = card && card.querySelector(".dc-name");
+  if(!el) return;
+  const old = docMeta(id) ? docMeta(id).name : "";
+  el.innerHTML = `<input class="fl-rename" value="${esc(old)}" spellcheck="false">`;
+  const inp = el.querySelector("input");
+  inp.focus(); inp.select();
+
+  let done = false;
+  const finish = commit => {
+    if(done) return;
+    done = true;
+    const v = inp.value.trim();
+    if(commit && v && v !== old) renameDoc(id, v);
+    else renderWorkspace();
+  };
+  inp.addEventListener("keydown", ev => {
+    ev.stopPropagation();
+    if(ev.key === "Enter"){ ev.preventDefault(); finish(true); }
+    else if(ev.key === "Escape"){ ev.preventDefault(); finish(false); }
+  });
+  inp.addEventListener("blur", () => finish(true));
+  inp.addEventListener("pointerdown", ev => ev.stopPropagation());
+  inp.addEventListener("click", ev => ev.stopPropagation());
+}
+
+/* 卡片右上角「⋯」 */
+function cardMenu(id, at){
+  const m = docMeta(id);
+  if(!m) return;
+  const data = docData(m);
+  openMenu(null, [
+    {head: m.name},
+    {label:"打开", fn: () => openInEditor(id)},
+    {label:"重命名", fn: () => setTimeout(() => startCardRename(id), 0)},
+    {label:"复制一份", fn: () => { duplicateDoc(id); renderWorkspace(); }},
+    {sep:true},
+    {label:"保存到磁盘…", fn: () => { openInEditor(id); setTimeout(() => saveToDisk(false), 120); }},
+    {label:"导出 JSON", fn: () => {
+      openInEditor(id);
+      setTimeout(() => {
+        download(new Blob([JSON.stringify({
+          app:"FlowForge", version:2, name: m.name,
+          exportedAt:new Date().toISOString(),
+          nodes:data.nodes, edges:data.edges, notes:data.notes
+        }, null, 2)], {type:"application/json"}), m.name + ".json");
+        toast("JSON 副本已下载");
+      }, 120);
+    }},
+    {label:"删除…", danger:true, fn: () => { deleteDoc(id); renderWorkspace(); }}
+  ], {x: at.x, y: at.y});
+}
+
+function bindWorkspace(){
+  $("#btnHome").addEventListener("click", () => setView("workspace"));
+
+  $("#wsGrid").addEventListener("click", ev => {
+    const more = ev.target.closest(".dc-more");
+    const card = ev.target.closest(".doc-card");
+
+    if(more && card){
+      ev.stopPropagation();
+      const r = more.getBoundingClientRect();
+      cardMenu(card.dataset.id, {x: r.left - 150, y: r.bottom + 4});
+      return;
+    }
+    if(card){ openInEditor(card.dataset.id); return; }
+    if(ev.target.closest("#wsNewCard")){ createDoc("未命名流程图"); setView("editor"); }
+  });
+
+  $("#wsTpls").addEventListener("click", ev => {
+    const b = ev.target.closest("[data-tpl]");
+    if(!b) return;
+    const key = b.dataset.tpl;
+    const tpl = TEMPLATES[key];
+    if(!tpl) return;
+    const data = tpl.build();
+    createDoc(tpl.name, data);
+    setView("editor");
+    toast("已从模板创建「" + tpl.name + "」");
+  });
+
+  $("#wsSearch").addEventListener("input", ev => {
+    wsQuery = ev.target.value;
+    renderWorkspace();
+  });
+  $("#wsSort").addEventListener("change", ev => {
+    wsSort = ev.target.value;
+    renderWorkspace();
+  });
+
+  $("#wsNew").addEventListener("click", () => {
+    createDoc("未命名流程图");
+    setView("editor");
+  });
+
+  $("#wsImport").addEventListener("click", () => {
+    openMenu($("#wsImport"), [
+      {head:"从文件导入"},
+      {label:"JSON 工程文件…", fn: () => pickFiles(".json,.jsonc", "new")},
+      {label:"CSV 节点表 + 连线表…", fn: () => pickFiles(".csv", "replace")}
+    ]);
+  });
+
+  $("#wsTheme").addEventListener("click", toggleTheme);
+  $("#wsHelp").addEventListener("click", showHelp);
+
+  $("#tabBar").addEventListener("click", ev => {
+    const close = ev.target.closest("[data-close]");
+    if(close){ ev.stopPropagation(); closeTab(close.dataset.close); return; }
+    if(ev.target.closest("#btnFiles")){ openDrawer(); return; }
+    const tab = ev.target.closest(".tab");
+    if(tab && tab.dataset.id !== activeDocId) openDoc(tab.dataset.id);
+  });
+}
+
+function toggleTheme(){
+  state.theme = state.theme === "light" ? "dark" : "light";
+  applyTheme();
+  render();
+  renderInspector();
+  savePrefs();
+  if(appView === "workspace") renderWorkspace();
+  toast("已切换到" + (state.theme === "dark" ? "暗色" : "亮色") + "主题");
+}
 
 /* ============================================================
    8. 模板
@@ -3263,7 +3827,9 @@ function importJSONText(text, asNew){
   const proj = parseProjectFile(text);
   if(!proj){ toast("不是有效的 FlowForge 文件"); return; }
   if(asNew){
-    createDoc(proj.name || "导入的流程图", proj);
+    const id = createDoc(proj.name || "导入的流程图", proj);
+    openInEditor(id);
+    toast("已导入为新文件（" + proj.nodes.length + " 个节点）");
     return;
   }
   state.nodes = proj.nodes;
@@ -3271,7 +3837,10 @@ function importJSONText(text, asNew){
   state.edges = proj.edges;
   state.notes = proj.notes;
   sel.clear();
-  render(); renderInspector(); fitView(); pushHistory(); saveLocal();
+  render(); renderInspector(); pushHistory(); saveLocal();
+  viewReady = false;
+  if(appView === "editor"){ fitView(); viewReady = true; }
+  else setView("editor");
   toast("已导入 " + state.nodes.length + " 个节点（覆盖当前文件）");
 }
 
@@ -3380,7 +3949,10 @@ function importCSVFiles(files){
     state.edges = edges;
     state.notes = [];
     sel.clear();
-    render(); renderInspector(); fitView(); pushHistory(); saveLocal();
+    render(); renderInspector(); pushHistory(); saveLocal();
+    viewReady = false;
+    if(appView === "editor"){ fitView(); viewReady = true; }
+    else setView("editor");
     toast(`CSV 导入完成：${nodes.length} 节点 / ${edges.length} 连线`);
   });
 }
@@ -3581,7 +4153,6 @@ $("#btnExport").addEventListener("click", ev => {
 });
 
 /* ---------- 文件抽屉 ---------- */
-$("#btnFiles").addEventListener("click", toggleDrawer);
 $("#fdClose").addEventListener("click", closeDrawer);
 $("#drawerMask").addEventListener("click", closeDrawer);
 $("#fdSearch").addEventListener("input", renderFileList);
@@ -3628,14 +4199,7 @@ $("#fdList").addEventListener("dblclick", ev => {
   startRename(item.dataset.id);
 });
 
-$("#btnTheme").addEventListener("click", () => {
-  state.theme = state.theme === "light" ? "dark" : "light";
-  applyTheme();
-  render();
-  renderInspector();
-  savePrefs();
-  toast("已切换到" + (state.theme === "dark" ? "暗色" : "亮色") + "主题");
-});
+$("#btnTheme").addEventListener("click", toggleTheme);
 
 function applyTheme(){
   document.documentElement.setAttribute("data-theme", state.theme);
@@ -3688,6 +4252,33 @@ window.addEventListener("keydown", ev => {
   const key = ev.key;
   const el0 = document.activeElement;
   const inField = !!el0 && /^(INPUT|TEXTAREA|SELECT)$/.test(el0.tagName);
+
+  /* 工作台只用搜索相关的键，画布快捷键一律不接管 */
+  if(appView === "workspace"){
+    if(mod && !ev.altKey && key.toLowerCase() === "k"){
+      ev.preventDefault();
+      const s = $("#wsSearch"); if(s){ s.focus(); s.select(); }
+      return;
+    }
+    if(key === "Escape"){
+      const s = $("#wsSearch");
+      if(document.activeElement === s && s.value){ s.value = ""; wsQuery = ""; renderWorkspace(); }
+      else if(s) s.blur();
+      return;
+    }
+    if(key === "Enter" && !inField){
+      const first = document.querySelector(".doc-card");
+      if(first) openInEditor(first.dataset.id);
+      return;
+    }
+    return;
+  }
+
+  if(mod && ev.altKey && key.toLowerCase() === "h"){
+    ev.preventDefault();
+    setView("workspace");
+    return;
+  }
 
   if(key === " " && !mod){
     if(inField) return;
@@ -3822,6 +4413,8 @@ function showHelp(){
     ["<kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>", "保存到磁盘 / 另存为（首次会弹出选文件）"],
     ["<kbd>Ctrl</kbd>+<kbd>O</kbd>", "打开本地工程文件"],
     ["<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>", "新建文件 / 打开文件面板"],
+    ["<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd>", "回到工作台（总览）"],
+    ["<kbd>Ctrl</kbd>+<kbd>K</kbd>", "工作台里聚焦搜索框"],
     ["<kbd>Ctrl</kbd>+<kbd>E</kbd>", "导出 PNG"],
     ["<kbd>Esc</kbd>", "取消选择 / 退出当前工具"],
     ["<kbd>右键</kbd>", "上下文菜单：复制、置顶置底、改线型/走线/箭头、粘贴、导出"],
@@ -3837,8 +4430,13 @@ function showHelp(){
       ${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}
     </table>
     <p class="sub" style="margin-top:16px">
-      <b style="color:var(--text)">文件储存</b>：点顶栏左边的文件名按钮打开文件面板。
-      可以同时存多份图，改完自动存进浏览器；把某份「保存到磁盘」后会绑定本地 <code>.json</code>，
+      <b style="color:var(--text)">工作台</b>：打开就是文件总览，每张卡片是这份图的实时缩略图。
+      点卡片进编辑器，上面的标签栏可以同时开好几份，切换不丢状态。
+      顶栏品牌区、<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>H</kbd> 都能回到工作台。
+    </p>
+    <p class="sub">
+      <b style="color:var(--text)">文件储存</b>：文件面板（标签栏的 <b>＋</b>）里可以新建、改名、复制、删除。
+      改完自动存进浏览器；把某份「保存到磁盘」后会绑定本地 <code>.json</code>，
       之后 Ctrl+S 直接写回原文件，不再弹框。
       Chrome / Edge 支持直接读写磁盘，其他浏览器会退化成下载 JSON。
     </p>`;
@@ -3857,25 +4455,26 @@ function boot(){
   const mode = bootDocs();
   applyTheme();
 
-  // 有内容就居中显示，避免窗口尺寸变化后图跑到屏幕外
-  if(mode === "restored" || mode === "empty"){
-    if(state.nodes.length > 0 || state.notes.length > 0) fitView();
-    else resetView();
-  }
-
   render();
   renderInspector();
   updateStatus();
   pushHistory();
   docDirty = false;
   updateDocBadge();
+  renderTabs();
+  bindWorkspace();
 
-  if(mode === "first"){
-    setTimeout(() => toast("示例已载入 · 右上角「文件」里可以新建、切换、存到磁盘"), 700);
+  // 带 #editor 进来直接开画布（书签、测试用），否则落在工作台
+  const wantEditor = location.hash === "#editor";
+  if(wantEditor && openTabs.length === 0) openTabs.push(activeDocId);
+  setView(wantEditor ? "editor" : "workspace");
+
+  if(mode === "first" && !wantEditor){
+    setTimeout(() => toast("这是示例图 · 点卡片进编辑器，或直接新建一份"), 700);
   }
 }
 
-window.addEventListener("resize", () => { applyView(); });
+window.addEventListener("resize", () => { if(appView === "editor") applyView(); });
 
 /* 调试句柄：自动化测试与二次开发可以直接读写状态，不影响正常使用 */
 window.FF = {
@@ -3883,12 +4482,16 @@ window.FF = {
   get sel(){ return sel; },
   get docs(){ return docs; },
   get activeDocId(){ return activeDocId; },
+  get view(){ return appView; },
+  get tabs(){ return openTabs.slice(); },
   SHAPES, render, renderInspector, fitView, selectOnly, clearSelect,
   mkNode, mkEdge, undo, redo,
   // 文件储存
   createDoc, openDoc, renameDoc, duplicateDoc, deleteDoc, flushSave, saveLocal,
   renderFileList, readDocData, exportPayload, openDrawer, closeDrawer,
-  saveToDisk, openFromDisk, fsSupported
+  saveToDisk, openFromDisk, fsSupported,
+  // 工作台
+  setView, openInEditor, renderWorkspace, renderTabs, closeTab, thumbMarkup, applyView
 };
 
 boot();

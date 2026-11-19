@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
+const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href + '#editor';
 
 const CANDIDATES = [
   process.env.CHROME_PATH,
@@ -153,12 +153,12 @@ ok('F9 Ctrl+C/V 粘贴节点', await nodeCount() === c0 + 1, `${c0} → ${await 
 
 /* ============ F10 图层顺序 ============ */
 await clickNode(0);
-const idsBefore = await page.evaluate(() => [...document.querySelectorAll('[data-kind="node"]')].map(e => e.dataset.id));
-const target = idsBefore[0];
+// 粘贴出来的节点可能压在原节点上，命中哪个不确定——以实际选中的那个为准
+const target = await page.evaluate(() => (Array.from(FF.sel)[0] || "").slice(5));
 await page.evaluate(() => document.querySelector('[data-act="front"]').click());
 await sleep(250);
 const idsAfter = await page.evaluate(() => [...document.querySelectorAll('[data-kind="node"]')].map(e => e.dataset.id));
-ok('F10 置顶改变绘制顺序', idsAfter[idsAfter.length-1] === target, `${target.slice(0,6)} → 末位`);
+ok('F10 置顶改变绘制顺序', !!target && idsAfter[idsAfter.length-1] === target, `${target.slice(0,6)} → 末位`);
 
 /* ============ F11 双击连线编辑标签 ============ */
 const mid = await page.evaluate(() => {

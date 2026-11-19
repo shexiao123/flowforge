@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
+const PAGE_URL = pathToFileURL(path.join(ROOT, 'index.html')).href + '#editor';
 const OUT = ROOT + path.sep;
 
 // Chrome 位置：可用环境变量 CHROME_PATH 覆盖
