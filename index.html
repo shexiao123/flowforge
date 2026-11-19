@@ -203,6 +203,82 @@ html[data-theme="dark"] .btn-block.danger:hover{background:#1f1114}
 }
 .statusbar b{color:var(--text);font-weight:600}
 .st-spacer{flex:1}
+.st-save{display:inline-flex;align-items:center;gap:5px}
+.st-save::before{content:"";width:5px;height:5px;border-radius:50%;background:#16a34a;opacity:.75}
+.st-save.busy::before{background:#f59e0b}
+.st-save.warn::before{background:#dc2626}
+
+/* ---------- 文件抽屉 ---------- */
+.drawer-mask{
+  position:fixed;left:52px;top:52px;right:0;bottom:26px;z-index:70;
+  background:rgba(15,23,42,.26);opacity:0;pointer-events:none;transition:opacity .16s;
+}
+html[data-theme="dark"] .drawer-mask{background:rgba(0,0,0,.5)}
+.drawer-mask.on{opacity:1;pointer-events:auto}
+.file-drawer{
+  position:fixed;left:52px;top:52px;bottom:26px;width:312px;z-index:71;
+  background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  transform:translateX(calc(-100% - 53px));transition:transform .2s cubic-bezier(.2,.7,.3,1);
+  box-shadow:0 12px 34px rgba(16,24,40,.18);
+}
+html[data-theme="dark"] .file-drawer{box-shadow:0 12px 34px rgba(0,0,0,.55)}
+.file-drawer.on{transform:none}
+.fd-head{display:flex;align-items:center;gap:8px;padding:12px 12px 8px}
+.fd-title{font-size:13px;font-weight:650;letter-spacing:.2px}
+.fd-sub{font-size:11px;color:var(--dim);font-weight:400;margin-left:2px}
+.fd-head .btn.icon{width:26px;height:26px;font-size:15px;line-height:1}
+.fd-head .sp{flex:1}
+.fd-search{padding:0 12px 8px}
+.fd-search input{
+  width:100%;height:30px;border:1px solid var(--border);background:var(--panel2);
+  color:var(--text);border-radius:8px;padding:0 10px;font-size:12px;outline:none;
+}
+.fd-search input:focus{border-color:var(--accent);background:var(--panel)}
+.fd-list{flex:1;overflow-y:auto;padding:2px 8px 10px}
+.fl-item{
+  display:flex;align-items:flex-start;gap:9px;padding:8px 9px;border-radius:8px;
+  cursor:pointer;border:1px solid transparent;position:relative;
+}
+.fl-item:hover{background:var(--hover)}
+.fl-item.on{background:var(--accent2);border-color:var(--accent)}
+.fl-ico{
+  width:22px;height:26px;flex:0 0 22px;border-radius:4px;border:1.5px solid currentColor;
+  color:var(--dim);position:relative;margin-top:1px;opacity:.8;
+}
+.fl-item.on .fl-ico{color:var(--accent);opacity:1}
+.fl-ico::after{content:"";position:absolute;left:3.5px;right:3.5px;top:8px;height:1.5px;
+  background:currentColor;box-shadow:0 5px 0 currentColor}
+.fl-body{flex:1;min-width:0}
+.fl-name{font-size:12.5px;font-weight:520;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.45}
+.fl-meta{font-size:10.5px;color:var(--dim);margin-top:2px;display:flex;gap:6px;align-items:center}
+.fl-meta .dot{opacity:.5}
+.fl-badge{font-size:9.5px;padding:0 4px;border-radius:3px;background:var(--hover);color:var(--dim);line-height:15px}
+.fl-item.on .fl-badge{background:#fff;color:var(--accent)}
+html[data-theme="dark"] .fl-item.on .fl-badge{background:#0b1926}
+#curDocName{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+.fl-more{
+  width:20px;height:20px;border-radius:5px;color:var(--dim);opacity:0;font-size:14px;
+  line-height:1;flex:0 0 20px;margin-top:1px;
+}
+.fl-item:hover .fl-more{opacity:1}
+.fl-more:hover{background:var(--border);color:var(--text)}
+.fl-rename{
+  width:100%;height:22px;border:1px solid var(--accent);border-radius:5px;
+  background:var(--panel);color:var(--text);font-size:12.5px;padding:0 5px;outline:none;
+}
+.fd-empty{padding:26px 12px;text-align:center;color:var(--dim);font-size:12px;line-height:1.9}
+.fd-foot{border-top:1px solid var(--border);padding:9px 12px;display:grid;gap:6px}
+.fd-foot .row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fd-foot .btn{height:30px;justify-content:center;font-size:12px}
+.fd-foot .row2 .btn{background:var(--panel2);border:1px solid var(--border)}
+.fd-foot .row2 .btn:hover{background:var(--hover);border-color:var(--dim)}
+.fd-disk{
+  font-size:10.5px;color:var(--dim);display:flex;align-items:center;gap:6px;
+  padding:1px 1px 8px;line-height:1.5;
+}
+.fd-disk .lamp{width:5px;height:5px;border-radius:50%;background:#94a3b8;flex:0 0 5px}
+.fd-disk.on .lamp{background:#16a34a}
 
 /* 菜单 */
 #menuLayer{position:fixed;inset:0;z-index:80;display:none}
@@ -218,7 +294,11 @@ html[data-theme="dark"] .btn-block.danger:hover{background:#1f1114}
 .menu-item:hover{background:var(--hover)}
 .menu-item .k{margin-left:auto;color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
 .menu-sep{height:1px;background:var(--border);margin:4px 6px}
-.menu-head{font-size:10.5px;color:var(--dim);padding:6px 10px 3px;letter-spacing:.07em;text-transform:uppercase}
+.menu-head{font-size:10.5px;color:var(--dim);padding:6px 10px 3px;letter-spacing:.07em;text-transform:uppercase;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-item.danger{color:#e11d48}
+.menu-item.danger:hover{background:#fff1f2;color:#be123c}
+html[data-theme="dark"] .menu-item.danger{color:#fb7185}
+html[data-theme="dark"] .menu-item.danger:hover{background:#241317;color:#fda4af}
 
 /* 模态 */
 #modalLayer{position:fixed;inset:0;background:rgba(10,15,22,.42);z-index:90;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
@@ -270,6 +350,10 @@ html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
       FlowForge <small>导流图工作台</small>
     </div>
     <div class="tb-group">
+      <button class="btn" id="btnFiles" title="文件储存 (Ctrl+Alt+F)">
+        <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <span id="curDocName">未命名</span>
+      </button>
       <button class="btn" id="btnTemplates">模板
         <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
       </button>
@@ -350,6 +434,7 @@ html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
     <span id="stCount">节点 0 · 连线 0</span>
     <span id="stSel"></span>
     <span class="st-spacer"></span>
+    <span id="stSave" class="st-save">已自动保存</span>
     <span id="stPos">x 0, y 0</span>
     <span id="stZoom">100%</span>
   </footer>
@@ -357,6 +442,28 @@ html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
 
 <div id="menuLayer"><div class="menu" id="menu"></div></div>
 <div id="modalLayer"><div class="modal" id="modal"></div></div>
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="file-drawer" id="fileDrawer">
+  <div class="fd-head">
+    <span class="fd-title">文件</span>
+    <span class="fd-sub" id="fdCount"></span>
+    <span class="sp"></span>
+    <button class="btn icon" id="fdNew" title="新建文件 (Ctrl+Alt+N)">＋</button>
+    <button class="btn icon" id="fdClose" title="关闭 (Esc)">✕</button>
+  </div>
+  <div class="fd-search">
+    <input id="fdSearch" placeholder="搜索文件名…" spellcheck="false">
+  </div>
+  <div class="fd-list" id="fdList"></div>
+  <div class="fd-foot">
+    <div class="fd-disk" id="fdDisk"><span class="lamp"></span><span id="fdDiskText">浏览器本地存储</span></div>
+    <div class="row2">
+      <button class="btn" id="fdOpenFile">打开本地文件</button>
+      <button class="btn" id="fdSaveAs">另存为…</button>
+    </div>
+    <button class="btn primary" id="fdSave">保存到磁盘 <span style="opacity:.7;font-size:11px">Ctrl+S</span></button>
+  </div>
+</aside>
 <div id="editorOverlay"><textarea id="editorArea" spellcheck="false"></textarea></div>
 <input type="file" id="fileInput" hidden multiple>
 <div class="toast" id="toast"></div>
@@ -1326,32 +1433,545 @@ function updateHistoryButtons(){
 }
 
 /* ============================================================
-   7. 本地持久化
+   7. 文件储存
+   ------------------------------------------------------------
+   两层：
+   · 工作区层 —— 浏览器里可以存多份文件（每份独立 key），
+     随时切换、改名、复制、删除，编辑时自动存盘。
+   · 磁盘层 —— Chrome / Edge 支持 File System Access API，
+     可以把某份文件绑定到本地 .json，之后 Ctrl+S 直接写回原文件；
+     不支持的浏览器自动降级为「下载 JSON」。
    ============================================================ */
-const LS_KEY = "flowforge_v1";
+const DOC_INDEX_KEY = "flowforge_docs_v1";
+const DOC_DATA_KEY  = id => "flowforge_doc_v1_" + id;
+const ACTIVE_DOC_KEY = "flowforge_active_v1";
+const PREFS_KEY = "flowforge_prefs_v1";
+const LEGACY_KEY = "flowforge_v1";   // 旧版单文档存档，用于迁移
 
+const fsSupported = () => typeof window.showSaveFilePicker === "function";
+
+let docs = [];              // [{id,name,updated,count}]
+let activeDocId = "";
+let docDirty = false;
+let drawerOpen = false;
+let linkedDocs = new Set();  // 已绑定磁盘句柄的文档 id
+let saveTimer = 0;
+
+/* ---------- 底层读写 ---------- */
+function readJSON(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(err){ return fallback; }
+}
+function writeJSON(key, val){
+  try{ localStorage.setItem(key, JSON.stringify(val)); return true; }
+  catch(err){
+    toast(err && err.name === "QuotaExceededError"
+      ? "本地空间已满，请导出后清理旧文件"
+      : "写入本地存储失败（可能是隐私模式）");
+    return false;
+  }
+}
+
+/* ---------- 文档索引 ---------- */
+function loadDocIndex(){
+  const arr = readJSON(DOC_INDEX_KEY, null);
+  docs = Array.isArray(arr) ? arr.filter(d => d && d.id && d.name) : [];
+}
+function saveDocIndex(){ writeJSON(DOC_INDEX_KEY, docs); }
+function docMeta(id){ return docs.find(d => d.id === id) || null; }
+
+function readDocData(id){
+  const o = readJSON(DOC_DATA_KEY(id), null);
+  if(!o || !Array.isArray(o.nodes)) return {nodes:[], edges:[], notes:[], view:null};
+  return {
+    nodes: o.nodes, edges: o.edges || [], notes: o.notes || [],
+    view: (o.view && typeof o.view.k === "number") ? o.view : null
+  };
+}
+
+function writeDocData(id, data){
+  const src = data || {nodes:state.nodes, edges:state.edges, notes:state.notes, view:state.view};
+  return writeJSON(DOC_DATA_KEY(id), {
+    name: (docMeta(id) || {}).name || "未命名",
+    nodes: src.nodes, edges: src.edges, notes: src.notes,
+    view: src.view || null, savedAt: Date.now()
+  });
+}
+
+/* ---------- 自动存盘（合并高频写入） ---------- */
 function saveLocal(){
-  try{
-    localStorage.setItem(LS_KEY, JSON.stringify({
-      nodes:state.nodes, edges:state.edges, notes:state.notes,
-      theme:state.theme, view:state.view
-    }));
-  }catch(err){ /* 隐私模式或超配额时静默 */ }
+  docDirty = true;
+  updateDocBadge();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, 160);
 }
 
-function loadLocal(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    if(!raw) return false;
-    const o = JSON.parse(raw);
-    state.nodes = o.nodes || [];
-    state.edges = o.edges || [];
-    state.notes = o.notes || [];
-    state.theme = o.theme === "dark" ? "dark" : "light";
-    if(o.view && typeof o.view.k === "number") state.view = o.view;
-    return true;
-  }catch(err){ return false; }
+function flushSave(){
+  clearTimeout(saveTimer);
+  saveTimer = 0;
+  if(!activeDocId || !docMeta(activeDocId)) return false;
+  const ok = writeDocData(activeDocId);
+  if(ok){
+    const m = docMeta(activeDocId);
+    m.updated = Date.now();
+    m.count = state.nodes.length;
+    saveDocIndex();
+    docDirty = false;
+    updateDocBadge();
+  }
+  return ok;
 }
+
+/* 页面关掉前把没落盘的改动写进去 */
+window.addEventListener("beforeunload", () => { if(docDirty) flushSave(); });
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden" && docDirty) flushSave();
+});
+
+/* ---------- 偏好（主题、上次用的形状） ---------- */
+function savePrefs(){
+  writeJSON(PREFS_KEY, {theme:state.theme, lastShape:state.lastShape});
+}
+function loadPrefs(){
+  const p = readJSON(PREFS_KEY, null);
+  if(!p) return;
+  state.theme = p.theme === "dark" ? "dark" : "light";
+  if(typeof p.lastShape === "string") state.lastShape = p.lastShape;
+}
+
+/* ---------- 界面小工具 ---------- */
+function relTime(ts){
+  if(!ts) return "从未保存";
+  const d = Date.now() - ts;
+  if(d < 60e3) return "刚刚";
+  if(d < 3600e3) return Math.floor(d / 60e3) + " 分钟前";
+  if(d < 86400e3) return Math.floor(d / 3600e3) + " 小时前";
+  if(d < 7 * 86400e3) return Math.floor(d / 86400e3) + " 天前";
+  const t = new Date(ts);
+  return (t.getMonth() + 1) + "月" + t.getDate() + "日";
+}
+
+function updateDocBadge(){
+  const m = docMeta(activeDocId);
+  const name = m ? m.name : "未命名";
+  const el = $("#curDocName");
+  if(el) el.textContent = name;
+  document.title = "FlowForge · " + name;
+  const st = $("#stSave");
+  if(st){
+    // 自动存盘只要 160ms，不闪「未保存」四个字，只用圆点颜色示意
+    st.textContent = "已自动保存";
+    st.className = "st-save" + (docDirty ? " busy" : "");
+  }
+  const disk = $("#fdDisk"), dt = $("#fdDiskText");
+  if(disk && dt){
+    const linked = linkedDocs.has(activeDocId);
+    disk.classList.toggle("on", linked);
+    dt.textContent = linked
+      ? "已绑定本地文件 · Ctrl+S 直接写回"
+      : (fsSupported() ? "尚未绑定本地文件" : "当前浏览器不支持直接写盘，保存将下载 JSON");
+  }
+}
+
+/* ---------- 打开 / 切换 ---------- */
+function adoptDocData(d){
+  state.nodes = d.nodes || [];
+  state.nodes.forEach(fitNodeHeight);
+  state.edges = d.edges || [];
+  state.notes = d.notes || [];
+  sel.clear();
+  connectFrom = null;
+}
+
+function openDoc(id, data){
+  if(!docMeta(id)) return false;
+  if(id === activeDocId && !data) return false;
+  flushSave();
+  const d = data || readDocData(id);
+  activeDocId = id;
+  try{ localStorage.setItem(ACTIVE_DOC_KEY, id); }catch(err){}
+
+  adoptDocData(d);
+  history.stack = [];
+  history.idx = -1;
+
+  if(d.view) { state.view = {tx:d.view.tx, ty:d.view.ty, k:d.view.k}; applyView(); }
+  else fitView();
+
+  render(); renderInspector(); updateStatus();
+  pushHistory();
+  docDirty = false;
+  updateDocBadge();
+  renderFileList();
+  return true;
+}
+
+function uniqueDocName(base, exceptId){
+  let name = String(base || "未命名").trim().slice(0, 48) || "未命名";
+  const taken = n => docs.some(d => d.name === n && d.id !== exceptId);
+  if(!taken(name)) return name;
+  const stem = name.replace(/\s*\(\d+\)$/, "");
+  let i = 2;
+  while(taken(stem + " (" + i + ")")) i++;
+  return stem + " (" + i + ")";
+}
+
+function newDocId(){ return uid("doc"); }
+
+function createDoc(name, data, opts){
+  flushSave();
+  const id = newDocId();
+  const meta = {id, name: uniqueDocName(name || "未命名流程图"), updated: Date.now(), count:0};
+  docs.unshift(meta);
+  saveDocIndex();
+
+  const content = data || {nodes:[], edges:[], notes:[], view:null};
+  writeJSON(DOC_DATA_KEY(id), {
+    name: meta.name, nodes: content.nodes || [], edges: content.edges || [],
+    notes: content.notes || [], view: content.view || null, savedAt: Date.now()
+  });
+  openDoc(id, {nodes:content.nodes || [], edges:content.edges || [],
+    notes:content.notes || [], view:content.view || null});
+  meta.count = state.nodes.length;
+  saveDocIndex();
+  if(!(opts && opts.silent)) toast("已新建「" + meta.name + "」");
+  return id;
+}
+
+function renameDoc(id, name){
+  const m = docMeta(id);
+  if(!m) return;
+  const clean = String(name || "").trim().slice(0, 48);
+  if(!clean || clean === m.name) { renderFileList(); return; }
+  m.name = uniqueDocName(clean, id);
+  m.updated = Date.now();
+  saveDocIndex();
+  if(id === activeDocId){
+    writeDocData(id);
+    updateDocBadge();
+  }
+  renderFileList();
+  toast("已重命名为「" + m.name + "」");
+}
+
+function duplicateDoc(id){
+  const m = docMeta(id);
+  if(!m) return;
+  flushSave();
+  const d = readDocData(id);
+  const nid = newDocId();
+  docs.unshift({id:nid, name: uniqueDocName(m.name + " 副本"), updated: Date.now(), count: d.nodes.length});
+  saveDocIndex();
+  writeJSON(DOC_DATA_KEY(nid), {
+    name: docs[0].name, nodes:d.nodes, edges:d.edges, notes:d.notes,
+    view:d.view, savedAt: Date.now()
+  });
+  openDoc(nid);
+  toast("已复制为「" + docMeta(nid).name + "」");
+}
+
+function deleteDoc(id){
+  const m = docMeta(id);
+  if(!m) return;
+  if(docs.length <= 1){ toast("至少保留一份文件"); return; }
+  if(!confirm("删除文件「" + m.name + "」？\n本地存档会一并清除，无法撤销。")) return;
+
+  const wasActive = id === activeDocId;
+  if(wasActive) activeDocId = "";     // 防止 flushSave 又把内容写回去
+  clearTimeout(saveTimer);
+  docs = docs.filter(d => d.id !== id);
+  saveDocIndex();
+  try{ localStorage.removeItem(DOC_DATA_KEY(id)); }catch(err){}
+  forgetHandle(id);
+
+  if(wasActive) openDoc(docs[0].id);
+  else renderFileList();
+  toast("已删除「" + m.name + "」");
+}
+
+/* ---------- 抽屉渲染 ---------- */
+function renderFileList(){
+  const list = $("#fdList");
+  if(!list) return;
+  const kw = ($("#fdSearch").value || "").trim().toLowerCase();
+  const rows = docs
+    .slice()
+    .sort((a, b) => (b.updated || 0) - (a.updated || 0))
+    .filter(d => !kw || d.name.toLowerCase().includes(kw));
+
+  $("#fdCount").textContent = docs.length + " 份";
+  if(rows.length === 0){
+    list.innerHTML = `<div class="fd-empty">${kw ? "没有匹配的文件" : "还没有文件，点右上角 ＋ 新建"}</div>`;
+    return;
+  }
+  list.innerHTML = rows.map(d => {
+    const on = d.id === activeDocId;
+    const linked = linkedDocs.has(d.id);
+    return `<div class="fl-item${on ? " on" : ""}" data-id="${d.id}" title="${esc(d.name)}">
+      <span class="fl-ico"></span>
+      <div class="fl-body">
+        <div class="fl-name">${esc(d.name)}</div>
+        <div class="fl-meta">
+          <span>${d.count || 0} 个节点</span><span class="dot">·</span><span>${relTime(d.updated)}</span>
+          ${linked ? `<span class="fl-badge">磁盘</span>` : ""}
+        </div>
+      </div>
+      <button class="fl-more" title="更多操作">⋯</button>
+    </div>`;
+  }).join("");
+}
+
+function openDrawer(){
+  drawerOpen = true;
+  $("#fileDrawer").classList.add("on");
+  $("#drawerMask").classList.add("on");
+  renderFileList();
+  updateDocBadge();
+  setTimeout(() => { const s = $("#fdSearch"); if(s && !s.value) s.focus(); }, 180);
+}
+function closeDrawer(){
+  drawerOpen = false;
+  $("#fileDrawer").classList.remove("on");
+  $("#drawerMask").classList.remove("on");
+  // 焦点还留在搜索框里的话，快捷键会被当成输入，交还给画布
+  const ae = document.activeElement;
+  if(ae && $("#fileDrawer").contains(ae)) ae.blur();
+}
+function toggleDrawer(){ drawerOpen ? closeDrawer() : openDrawer(); }
+
+/* 内联改名 */
+function startRename(id){
+  const item = document.querySelector(`.fl-item[data-id="${id}"]`);
+  const m = docMeta(id);
+  if(!item || !m) return;
+  const box = item.querySelector(".fl-name");
+  const old = m.name;
+  box.innerHTML = `<input class="fl-rename" value="${esc(old)}" spellcheck="false">`;
+  const inp = box.querySelector("input");
+  inp.focus();
+  inp.select();
+
+  let done = false;
+  const finish = commit => {
+    if(done) return;
+    done = true;
+    const v = inp.value.trim();
+    if(commit && v && v !== old) renameDoc(id, v);
+    else renderFileList();
+  };
+  inp.addEventListener("keydown", ev => {
+    ev.stopPropagation();
+    if(ev.key === "Enter"){ ev.preventDefault(); finish(true); }
+    else if(ev.key === "Escape"){ ev.preventDefault(); finish(false); }
+  });
+  inp.addEventListener("blur", () => finish(true));
+  inp.addEventListener("pointerdown", ev => ev.stopPropagation());
+}
+
+/* ---------- 磁盘：File System Access + IndexedDB 存句柄 ---------- */
+const IDB_NAME = "flowforge_fs";
+let idbPromise = null;
+
+function idbOpen(){
+  if(idbPromise) return idbPromise;
+  idbPromise = new Promise((res, rej) => {
+    let req;
+    try{ req = indexedDB.open(IDB_NAME, 1); }
+    catch(err){ rej(err); return; }
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if(!db.objectStoreNames.contains("handles")) db.createObjectStore("handles");
+    };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+  return idbPromise;
+}
+
+function idbOp(mode, fn){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const tx = db.transaction("handles", mode);
+    const store = tx.objectStore("handles");
+    const req = fn(store);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+    tx.onerror = () => rej(tx.error);
+  })).catch(() => null);
+}
+const idbGetHandle  = key => idbOp("readonly", s => s.get(key));
+const idbSetHandle  = (key, h) => idbOp("readwrite", s => s.put(h, key));
+const idbDelHandle  = key => idbOp("readwrite", s => s.delete(key));
+
+function forgetHandle(id){
+  linkedDocs.delete(id);
+  idbDelHandle(id);
+  updateDocBadge();
+  if(drawerOpen) renderFileList();
+}
+
+async function restoreHandles(){
+  await idbOpen().catch(() => null);
+  for(const d of docs){
+    const h = await idbGetHandle(d.id);
+    if(h) linkedDocs.add(d.id);
+  }
+  updateDocBadge();
+  if(drawerOpen) renderFileList();
+}
+
+function exportPayload(){
+  return {
+    app:"FlowForge", version:2,
+    name: (docMeta(activeDocId) || {}).name || "未命名",
+    exportedAt: new Date().toISOString(),
+    nodes: state.nodes, edges: state.edges, notes: state.notes
+  };
+}
+
+function safeFileName(){
+  return ((docMeta(activeDocId) || {}).name || "未命名")
+    .replace(/[\\/:*?"<>|]/g, "_").trim().slice(0, 60) || "未命名";
+}
+
+async function saveToDisk(asNew){
+  flushSave();
+  if(!fsSupported()){
+    exportJSON();
+    return;
+  }
+  try{
+    let handle = asNew ? null : await idbGetHandle(activeDocId);
+    if(handle){
+      let perm = await handle.queryPermission({mode:"readwrite"});
+      if(perm !== "granted"){
+        perm = await handle.requestPermission({mode:"readwrite"});
+        if(perm !== "granted") handle = null;
+      }
+    }
+    if(!handle){
+      handle = await window.showSaveFilePicker({
+        suggestedName: safeFileName() + ".json",
+        types:[{description:"FlowForge 工程文件", accept:{"application/json":[".json"]}}]
+      });
+      if(!asNew) await idbSetHandle(activeDocId, handle);
+      linkedDocs.add(activeDocId);
+    }
+
+    const w = await handle.createWritable();
+    await w.write(JSON.stringify(exportPayload(), null, 2));
+    await w.close();
+
+    docDirty = false;
+    updateDocBadge();
+    if(drawerOpen) renderFileList();
+    toast("已写入磁盘：" + handle.name);
+  }catch(err){
+    if(err && err.name === "AbortError") return;
+    if(err && err.name === "SecurityError"){
+      toast("浏览器拒绝了写盘权限，可改用「导出 → JSON」");
+      return;
+    }
+    toast("保存失败：" + (err && err.message ? err.message : "未知错误"));
+  }
+}
+
+function parseProjectFile(text){
+  let o;
+  try{ o = JSON.parse(text); }catch(err){ return null; }
+  if(!o || !Array.isArray(o.nodes)) return null;
+  return {
+    name: typeof o.name === "string" ? o.name : "",
+    nodes: o.nodes, edges: Array.isArray(o.edges) ? o.edges : [],
+    notes: Array.isArray(o.notes) ? o.notes : []
+  };
+}
+
+async function openFromDisk(){
+  if(!fsSupported()){
+    pickFiles(".json");
+    toast("当前浏览器不支持直接读盘，已改用文件选择框");
+    return;
+  }
+  try{
+    const [handle] = await window.showOpenFilePicker({
+      types:[{description:"FlowForge 工程文件", accept:{"application/json":[".json"]}}],
+      multiple:false
+    });
+    const file = await handle.getFile();
+    const proj = parseProjectFile(await file.text());
+    if(!proj){ toast("这不是有效的 FlowForge 工程文件"); return; }
+
+    const baseName = proj.name || file.name.replace(/\.json$/i, "");
+    const id = createDoc(baseName, proj);
+    await idbSetHandle(id, handle);
+    linkedDocs.add(id);
+    updateDocBadge();
+    renderFileList();
+    toast("已打开「" + file.name + "」");
+  }catch(err){
+    if(err && err.name === "AbortError") return;
+    toast("打开失败：" + (err && err.message ? err.message : "未知错误"));
+  }
+}
+
+/* ---------- 启动时整理存档 ---------- */
+function bootDocs(){
+  loadDocIndex();
+  loadPrefs();
+  let firstRun = false;
+
+  if(docs.length === 0){
+    const legacy = readJSON(LEGACY_KEY, null);
+    if(legacy && Array.isArray(legacy.nodes)){
+      // 老版本单文档 → 迁移为第一份文件
+      const id = newDocId();
+      docs = [{id, name:"我的流程图", updated:Date.now(), count:legacy.nodes.length}];
+      saveDocIndex();
+      writeJSON(DOC_DATA_KEY(id), {
+        name:"我的流程图", nodes:legacy.nodes, edges:legacy.edges || [],
+        notes:legacy.notes || [], view:legacy.view || null, savedAt:Date.now()
+      });
+      if(legacy.theme) state.theme = legacy.theme === "dark" ? "dark" : "light";
+      try{ localStorage.removeItem(LEGACY_KEY); }catch(err){}
+      activeDocId = id;
+    }else{
+      const id = newDocId();
+      const data = TEMPLATES.approval.build();
+      const notes = [{
+        id: uid("t"), x: 20, y: -170, w: 250, h: 106,
+        text: "提示：双击任意节点改文字；拖节点四边的圆点可以拉线。文件菜单里可以新建多份图和存到磁盘。",
+        color: ""
+      }];
+      docs = [{id, name:"示例 · 审批流程", updated:Date.now(), count:data.nodes.length}];
+      saveDocIndex();
+      writeJSON(DOC_DATA_KEY(id), {
+        name:"示例 · 审批流程", nodes:data.nodes, edges:data.edges,
+        notes, view:null, savedAt:Date.now()
+      });
+      activeDocId = id;
+      firstRun = true;
+    }
+  }else{
+    const saved = (() => { try{ return localStorage.getItem(ACTIVE_DOC_KEY); }catch(e){ return null; } })();
+    activeDocId = docMeta(saved) ? saved : docs[0].id;
+  }
+
+  if(!docMeta(activeDocId)) activeDocId = docs[0].id;
+  const d = readDocData(activeDocId);
+  try{ localStorage.setItem(ACTIVE_DOC_KEY, activeDocId); }catch(err){}
+  adoptDocData(d);
+  if(d.view){ state.view = {tx:d.view.tx, ty:d.view.ty, k:d.view.k}; applyView(); }
+  else { resetView(); }
+
+  updateDocBadge();
+  setTimeout(restoreHandles, 60);
+  return firstRun ? "first" : (d.nodes.length || d.notes.length ? "restored" : "empty");
+}
+
+/* 兼容旧调用名 */
+function loadLocal(){ return false; }
 
 /* ============================================================
    8. 模板
@@ -2467,6 +3087,7 @@ inspector.addEventListener("click", ev => {
     if(n){
       n.shape = shapeBtn.dataset.shape;
       state.lastShape = n.shape;
+      savePrefs();
       if(n.shape === "diamond" && n.h < 80) n.h = 80;
       fitNodeHeight(n);
       render(); renderInspector(); pushHistory(); saveLocal();
@@ -2598,7 +3219,7 @@ function openMenu(anchor, items, at){
     if(it.sep){ const d = document.createElement("div"); d.className = "menu-sep"; menuEl.appendChild(d); return; }
     if(it.head){ const d = document.createElement("div"); d.className = "menu-head"; d.textContent = it.head; menuEl.appendChild(d); return; }
     const b = document.createElement("button");
-    b.className = "menu-item";
+    b.className = "menu-item" + (it.danger ? " danger" : "");
     b.innerHTML = `<span>${it.label}</span>${it.k ? `<span class="k">${it.k}</span>` : ""}`;
     b.addEventListener("click", () => { closeMenu(); it.fn(); });
     menuEl.appendChild(b);
@@ -2632,27 +3253,26 @@ menuLayer.addEventListener("pointerdown", ev => {
    14. 导入导出
    ============================================================ */
 function exportJSON(){
-  const data = {
-    app:"FlowForge", version:1,
-    exportedAt: new Date().toISOString(),
-    nodes: state.nodes, edges: state.edges, notes: state.notes
-  };
+  const data = exportPayload();
   download(new Blob([JSON.stringify(data, null, 2)], {type:"application/json"}),
-    "flowforge-" + stamp() + ".json");
-  toast("JSON 已导出");
+    safeFileName() + "-" + stamp() + ".json");
+  toast("JSON 副本已下载");
 }
 
-function importJSONText(text){
-  let o;
-  try{ o = JSON.parse(text); }catch(err){ toast("JSON 解析失败，检查文件格式"); return; }
-  if(!o || !Array.isArray(o.nodes)){ toast("不是有效的 FlowForge 文件"); return; }
-  state.nodes = o.nodes || [];
+function importJSONText(text, asNew){
+  const proj = parseProjectFile(text);
+  if(!proj){ toast("不是有效的 FlowForge 文件"); return; }
+  if(asNew){
+    createDoc(proj.name || "导入的流程图", proj);
+    return;
+  }
+  state.nodes = proj.nodes;
   state.nodes.forEach(fitNodeHeight);
-  state.edges = o.edges || [];
-  state.notes = o.notes || [];
+  state.edges = proj.edges;
+  state.notes = proj.notes;
   sel.clear();
   render(); renderInspector(); fitView(); pushHistory(); saveLocal();
-  toast("已导入 " + state.nodes.length + " 个节点");
+  toast("已导入 " + state.nodes.length + " 个节点（覆盖当前文件）");
 }
 
 function toCSV(headers, rows){
@@ -2942,8 +3562,9 @@ $("#btnLayout").addEventListener("click", ev => {
 $("#btnImport").addEventListener("click", ev => {
   openMenu(ev.currentTarget, [
     {head:"从文件导入"},
-    {label:"JSON 工程文件…", fn: () => pickFiles(".json,.jsonc")},
-    {label:"CSV 节点表 + 连线表…", fn: () => pickFiles(".csv")},
+    {label:"JSON 工程（作为新文件）…", fn: () => pickFiles(".json,.jsonc", "new")},
+    {label:"JSON 工程（覆盖当前）…", fn: () => pickFiles(".json,.jsonc", "replace")},
+    {label:"CSV 节点表 + 连线表…", fn: () => pickFiles(".csv", "replace")},
     {sep:true},
     {label:"载入示例：审批流程", fn: () => loadTemplate("approval")}
   ]);
@@ -2954,20 +3575,65 @@ $("#btnExport").addEventListener("click", ev => {
     {head:"导出"},
     {label:"PNG 图片（2x）", k:"Ctrl+E", fn: exportPNG},
     {label:"SVG 矢量图", fn: exportSVG},
-    {label:"JSON 工程文件", k:"Ctrl+S", fn: exportJSON},
+    {label:"JSON 副本（下载）", fn: exportJSON},
     {label:"CSV 表格（两份）", fn: exportCSV}
   ]);
 });
 
-$("#btnUndo").addEventListener("click", undo);
-$("#btnRedo").addEventListener("click", redo);
+/* ---------- 文件抽屉 ---------- */
+$("#btnFiles").addEventListener("click", toggleDrawer);
+$("#fdClose").addEventListener("click", closeDrawer);
+$("#drawerMask").addEventListener("click", closeDrawer);
+$("#fdSearch").addEventListener("input", renderFileList);
+
+$("#fdNew").addEventListener("click", () => {
+  createDoc("未命名流程图");
+  const id = activeDocId;
+  renderFileList();
+  setTimeout(() => startRename(id), 60);
+});
+
+$("#fdOpenFile").addEventListener("click", () => { closeDrawer(); openFromDisk(); });
+$("#fdSaveAs").addEventListener("click", () => saveToDisk(true));
+$("#fdSave").addEventListener("click", () => saveToDisk(false));
+
+$("#fdList").addEventListener("click", ev => {
+  const more = ev.target.closest(".fl-more");
+  const item = ev.target.closest(".fl-item");
+  if(!item) return;
+  const id = item.dataset.id;
+
+  if(more){
+    ev.stopPropagation();
+    const m = docMeta(id);
+    if(!m) return;
+    const r = more.getBoundingClientRect();
+    openMenu(null, [
+      {head: m.name},
+      {label:"重命名", fn: () => setTimeout(() => startRename(id), 0)},
+      {label:"复制一份", fn: () => duplicateDoc(id)},
+      {label:"保存到磁盘…", fn: () => { openDoc(id); setTimeout(() => saveToDisk(false), 60); }},
+      {sep:true},
+      {label:"导出 JSON", fn: () => { openDoc(id); setTimeout(exportJSON, 60); }},
+      {label:"删除…", danger:true, fn: () => deleteDoc(id)}
+    ], {x:r.left, y:r.bottom + 4});
+    return;
+  }
+  if(id !== activeDocId) openDoc(id);
+});
+
+$("#fdList").addEventListener("dblclick", ev => {
+  const item = ev.target.closest(".fl-item");
+  if(!item) return;
+  startRename(item.dataset.id);
+});
 
 $("#btnTheme").addEventListener("click", () => {
   state.theme = state.theme === "light" ? "dark" : "light";
   applyTheme();
   render();
   renderInspector();
-  saveLocal();
+  savePrefs();
   toast("已切换到" + (state.theme === "dark" ? "暗色" : "亮色") + "主题");
 });
 
@@ -2992,7 +3658,9 @@ $$(".tool").forEach(btn => {
 });
 
 /* 文件选择 */
-function pickFiles(accept){
+let pickMode = "replace";
+function pickFiles(accept, mode){
+  pickMode = mode || "replace";
   fileInput.value = "";
   fileInput.setAttribute("accept", accept);
   fileInput.click();
@@ -3004,7 +3672,7 @@ fileInput.addEventListener("change", () => {
   const jsonFile = files.find(f => /\.json$/i.test(f.name));
   if(jsonFile){
     const fr = new FileReader();
-    fr.onload = () => importJSONText(String(fr.result));
+    fr.onload = () => importJSONText(String(fr.result), pickMode === "new");
     fr.readAsText(jsonFile, "utf-8");
     return;
   }
@@ -3047,7 +3715,28 @@ window.addEventListener("keydown", ev => {
     return;
   }
   // 保存 / 导出 / 复制：输入框里也接管，避免触发浏览器的保存对话框
-  if(mod && key.toLowerCase() === "s"){ ev.preventDefault(); exportJSON(); return; }
+  if(mod && !ev.altKey && key.toLowerCase() === "s"){
+    ev.preventDefault();
+    saveToDisk(!!ev.shiftKey);   // Shift = 另存为
+    return;
+  }
+  if(mod && !ev.altKey && key.toLowerCase() === "o"){
+    ev.preventDefault();
+    openFromDisk();
+    return;
+  }
+  if(mod && ev.altKey && key.toLowerCase() === "n"){
+    ev.preventDefault();
+    createDoc("未命名流程图");
+    if(!drawerOpen) openDrawer();
+    setTimeout(() => startRename(activeDocId), 80);
+    return;
+  }
+  if(mod && ev.altKey && key.toLowerCase() === "f"){
+    ev.preventDefault();
+    toggleDrawer();
+    return;
+  }
   if(mod && key.toLowerCase() === "e"){ ev.preventDefault(); exportPNG(); return; }
   if(mod && key.toLowerCase() === "d"){ ev.preventDefault(); duplicateSelection(); return; }
   if(mod && key.toLowerCase() === "c"){ if(inField) return; ev.preventDefault(); copySelection(); return; }
@@ -3062,6 +3751,7 @@ window.addEventListener("keydown", ev => {
   if(key === "Escape"){
     if(modalLayer.classList.contains("on")){ closeModal(); return; }
     if(menuLayer.classList.contains("on")){ closeMenu(); return; }
+    if(drawerOpen){ closeDrawer(); return; }
     if(connectFrom){ connectFrom = null; render(); return; }
     if(tool !== "select"){ setTool("select"); return; }
     clearSelect();
@@ -3129,7 +3819,10 @@ function showHelp(){
     ["<kbd>方向键</kbd> / <kbd>Shift</kbd>+方向键", "微移 1px / 10px"],
     ["<kbd>V</kbd> <kbd>N</kbd> <kbd>C</kbd> <kbd>M</kbd>", "选择 / 加节点 / 连线 / 批注"],
     ["<kbd>F</kbd>", "适配视图（全图居中）"],
-    ["<kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>E</kbd>", "导出 JSON / 导出 PNG"],
+    ["<kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>", "保存到磁盘 / 另存为（首次会弹出选文件）"],
+    ["<kbd>Ctrl</kbd>+<kbd>O</kbd>", "打开本地工程文件"],
+    ["<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd>", "新建文件 / 打开文件面板"],
+    ["<kbd>Ctrl</kbd>+<kbd>E</kbd>", "导出 PNG"],
     ["<kbd>Esc</kbd>", "取消选择 / 退出当前工具"],
     ["<kbd>右键</kbd>", "上下文菜单：复制、置顶置底、改线型/走线/箭头、粘贴、导出"],
     ["<kbd>右侧 · 形状</kbd>", "基础 / 流程 / 数据三组共 27 种形状，图标即实物"],
@@ -3144,8 +3837,10 @@ function showHelp(){
       ${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}
     </table>
     <p class="sub" style="margin-top:16px">
-      数据自动保存在浏览器本地（localStorage），关掉页面再打开还在。
-      要跨设备、跨人分享，用「导出 → JSON」发文件。
+      <b style="color:var(--text)">文件储存</b>：点顶栏左边的文件名按钮打开文件面板。
+      可以同时存多份图，改完自动存进浏览器；把某份「保存到磁盘」后会绑定本地 <code>.json</code>，
+      之后 Ctrl+S 直接写回原文件，不再弹框。
+      Chrome / Edge 支持直接读写磁盘，其他浏览器会退化成下载 JSON。
     </p>`;
   modalLayer.classList.add("on");
   $("#modalClose").addEventListener("click", closeModal);
@@ -3159,33 +3854,24 @@ modalLayer.addEventListener("click", ev => {
    18. 初始化
    ============================================================ */
 function boot(){
-  const restored = loadLocal();
+  const mode = bootDocs();
   applyTheme();
 
-  if(!restored){
-    // 首次打开给一份示例，避免面对空白发懵
-    const data = TEMPLATES.approval.build();
-    state.nodes = data.nodes;
-    state.edges = data.edges;
-    state.notes = [{
-      id: uid("t"), x: 20, y: -170, w: 250, h: 106,
-      text: "提示：双击任意节点改文字；拖节点四边的圆点可以拉线。",
-      color: ""
-    }];
-    resetView();
-  } else {
-    // 有存档：内容居中显示，避免窗口尺寸变化后图跑到屏幕外
+  // 有内容就居中显示，避免窗口尺寸变化后图跑到屏幕外
+  if(mode === "restored" || mode === "empty"){
     if(state.nodes.length > 0 || state.notes.length > 0) fitView();
     else resetView();
   }
 
   render();
   renderInspector();
+  updateStatus();
   pushHistory();
+  docDirty = false;
+  updateDocBadge();
 
-  // 首次进入给个轻提示
-  if(!restored){
-    setTimeout(() => toast("示例已载入 · 试试拖动节点四边的圆点拉线"), 700);
+  if(mode === "first"){
+    setTimeout(() => toast("示例已载入 · 右上角「文件」里可以新建、切换、存到磁盘"), 700);
   }
 }
 
@@ -3195,8 +3881,14 @@ window.addEventListener("resize", () => { applyView(); });
 window.FF = {
   get state(){ return state; },
   get sel(){ return sel; },
+  get docs(){ return docs; },
+  get activeDocId(){ return activeDocId; },
   SHAPES, render, renderInspector, fitView, selectOnly, clearSelect,
-  mkNode, mkEdge, undo, redo
+  mkNode, mkEdge, undo, redo,
+  // 文件储存
+  createDoc, openDoc, renameDoc, duplicateDoc, deleteDoc, flushSave, saveLocal,
+  renderFileList, readDocData, exportPayload, openDrawer, closeDrawer,
+  saveToDisk, openFromDisk, fsSupported
 };
 
 boot();
