@@ -80,13 +80,17 @@ const anchorVisible = await page.evaluate(() => {
 ok('T3 选中节点显示连线锚点', anchorVisible === '1', 'opacity=' + anchorVisible);
 
 // ---------- T4 拖拽移动节点 ----------
+// 先点一下空白，避免与 T2 的点击在同一元素上构成双击
+await page.mouse.click(310, 880);
+await sleep(220);
 const before = await page.evaluate(() => {
   const el = document.querySelectorAll('[data-kind="node"]')[0];
   return el.getBoundingClientRect().x;
 });
-await page.mouse.move(r0.cx, r0.cy);
+const r0b = await nodeRect(0);
+await page.mouse.move(r0b.cx, r0b.cy);
 await page.mouse.down();
-await page.mouse.move(r0.cx + 90, r0.cy + 50, { steps: 8 });
+await page.mouse.move(r0b.cx + 90, r0b.cy + 50, { steps: 8 });
 await page.mouse.up();
 await sleep(120);
 const after = await page.evaluate(() => {
@@ -106,8 +110,9 @@ ok('T5 Ctrl+Z 撤销拖拽', Math.abs(back - before) < 3, `x=${back.toFixed(0)} 
 
 // ---------- T6 从锚点拉线 ----------
 const e0 = (await counts()).edges;
-await page.mouse.move(r0.cx, r0.cy);           // 触发 hover
-await sleep(80);
+const rA0 = await nodeRect(0);
+await page.mouse.move(rA0.cx, rA0.cy);         // 触发 hover
+await sleep(120);
 const rA = await nodeRect(0);
 const rB = await nodeRect(1);
 await page.mouse.move(rA.x + rA.w - 1, rA.y + rA.h / 2);   // 右锚点
@@ -122,8 +127,11 @@ ok('T6 拖锚点拉出连线', e1 === e0 + 1, `edges ${e0} → ${e1}`);
 
 // ---------- T7 双击空白新建节点 ----------
 const cA = await counts();
-await page.mouse.click(300, 720, { clickCount: 2 });
-await sleep(250);
+// 真实双击 = 两次独立点击（应用内自行判定，不依赖浏览器 dblclick）
+await page.mouse.click(300, 720);
+await sleep(70);
+await page.mouse.click(300, 720);
+await sleep(300);
 const editingOn = await page.evaluate(() => document.querySelector('#editorOverlay').classList.contains('on'));
 await page.keyboard.type('测试节点');
 await page.keyboard.press('Escape');

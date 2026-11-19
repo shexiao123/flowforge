@@ -102,6 +102,20 @@ html[data-theme="dark"] .tool.active{background:var(--accent2);color:var(--accen
 .zoombar button:hover{background:var(--hover);color:var(--text)}
 .zoombar .divider{height:1px;background:var(--border);margin:2px 4px}
 
+/* 小地图 */
+.minimap{
+  position:absolute;right:60px;bottom:16px;width:168px;height:116px;
+  background:var(--panel);border:1px solid var(--border);border-radius:9px;
+  box-shadow:var(--shadow);overflow:hidden;opacity:.94;
+  transition:opacity .15s,box-shadow .15s;
+}
+.minimap:hover{opacity:1}
+.minimap svg{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.minimap .mm-empty{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-size:11px;color:var(--dim);pointer-events:none;
+}
+
 .hint{
   position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
   background:var(--panel);border:1px solid var(--border);border-radius:20px;
@@ -291,6 +305,9 @@ html[data-theme="dark"] .toast{background:#e5edf6;color:#0b1016}
         <rect id="gridRect" x="0" y="0" width="100%" height="100%"></rect>
         <g id="vp"></g>
       </svg>
+      <div class="minimap" id="minimap">
+        <svg id="mmSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
       <div class="zoombar">
         <button id="zIn" title="放大">+</button>
         <button id="zOut" title="缩小">−</button>
@@ -338,14 +355,14 @@ const THEMES = {
     nodeFill:"#ffffff", nodeStroke:"#cbd5e1", nodeText:"#1f2937",
     edge:"#94a3b8", edgeText:"#64748b", edgeBg:"#f5f7fa",
     noteFill:"#fef9e2", noteStroke:"#f0d75e", noteText:"#713f12", noteBar:"#f5d24b",
-    sel:"#2563eb"
+    mm:"#94a3b8", sel:"#2563eb"
   },
   dark: {
     canvas:"#080d13", grid:"#1a2532",
     nodeFill:"#151e29", nodeStroke:"#2d3c4e", nodeText:"#e6eef8",
     edge:"#5c7086", edgeText:"#93a6bb", edgeBg:"#080d13",
     noteFill:"#33290f", noteStroke:"#8a6d1a", noteText:"#fde68a", noteBar:"#8a6d1a",
-    sel:"#38bdf8"
+    mm:"#5f7d9c", sel:"#38bdf8"
   }
 };
 
@@ -400,6 +417,7 @@ const modalEl  = $("#modal");
 const editorOverlay = $("#editorOverlay");
 const editorArea    = $("#editorArea");
 const fileInput     = $("#fileInput");
+const mmSvg         = $("#mmSvg");
 
 /* ============================================================
    3. 几何与工具函数
@@ -425,6 +443,82 @@ function autoSides(a, b){
   const dx = bx - ax, dy = by - ay;
   if(Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? ["r","l"] : ["l","r"];
   return dy >= 0 ? ["b","t"] : ["t","b"];
+}
+
+/* ---------- 拖拽对齐吸附 ----------
+   对被拖节点的包围盒，分别比较 左/中/右 与 上/中/下 共 9 个候选边，
+   与其它节点的同类边求最近距离；吸附容差按屏幕像素换算，缩放时手感一致。 */
+const SNAP_PX = 7;
+
+function computeSnap(dragRef, dx, dy){
+  const ids = Object.keys(dragRef.starts);
+  let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity, valid = false;
+
+  ids.forEach(id => {
+    const n = byId(id), s = dragRef.starts[id];
+    if(!n || !s) return;
+    valid = true;
+    const nx = s.x + dx, ny = s.y + dy;
+    x1 = Math.min(x1, nx);       y1 = Math.min(y1, ny);
+    x2 = Math.max(x2, nx + n.w); y2 = Math.max(y2, ny + n.h);
+  });
+  if(!valid) return {dx, dy, lines:[]};
+
+  const tol = SNAP_PX / state.view.k;
+  const others = state.nodes.filter(n => !dragRef.starts[n.id]);
+  const vMine = [x1, (x1 + x2) / 2, x2];
+  const hMine = [y1, (y1 + y2) / 2, y2];
+
+  let bx = null, by = null;
+  others.forEach(o => {
+    const oc = [o.x, o.x + o.w / 2, o.x + o.w];
+    const oh = [o.y, o.y + o.h / 2, o.y + o.h];
+    for(let i = 0; i < 3; i++){
+      for(let j = 0; j < 3; j++){
+        const d = oc[j] - vMine[i];
+        if(Math.abs(d) <= tol && (!bx || Math.abs(d) < Math.abs(bx.d))) bx = {d, pos:oc[j]};
+        const e = oh[j] - hMine[i];
+        if(Math.abs(e) <= tol && (!by || Math.abs(e) < Math.abs(by.d))) by = {d:e, pos:oh[j]};
+      }
+    }
+  });
+
+  const ax = bx ? bx.d : 0;
+  const ay = by ? by.d : 0;
+  const lines = [];
+
+  // 参考线要覆盖所有落在同一条线上的节点，视觉上才说得通
+  const near = (v, pos) => Math.abs(v - pos) < 0.6;
+
+  if(bx){
+    let fy = Infinity, ty = -Infinity;
+    state.nodes.forEach(o => {
+      const s = dragRef.starts[o.id];
+      const ox = s ? s.x + dx + ax : o.x;
+      const oy = s ? s.y + dy + ay : o.y;
+      if(near(ox, bx.pos) || near(ox + o.w, bx.pos) || near(ox + o.w / 2, bx.pos)){
+        fy = Math.min(fy, oy);
+        ty = Math.max(ty, oy + o.h);
+      }
+    });
+    if(isFinite(fy)) lines.push({axis:"v", pos:bx.pos, from:fy - 26, to:ty + 26});
+  }
+
+  if(by){
+    let fx = Infinity, tx = -Infinity;
+    state.nodes.forEach(o => {
+      const s = dragRef.starts[o.id];
+      const ox = s ? s.x + dx + ax : o.x;
+      const oy = s ? s.y + dy + ay : o.y;
+      if(near(oy, by.pos) || near(oy + o.h, by.pos) || near(oy + o.h / 2, by.pos)){
+        fx = Math.min(fx, ox);
+        tx = Math.max(tx, ox + o.w);
+      }
+    });
+    if(isFinite(fx)) lines.push({axis:"h", pos:by.pos, from:fx - 26, to:tx + 26});
+  }
+
+  return {dx: dx + ax, dy: dy + ay, lines};
 }
 
 function ctrlPoint(p, side, d){
@@ -505,6 +599,7 @@ function applyView(){
   vp.setAttribute("transform", `translate(${tx},${ty}) scale(${k})`);
   gridPat.setAttribute("patternTransform", `translate(${tx},${ty}) scale(${k})`);
   $("#stZoom").textContent = Math.round(k * 100) + "%";
+  renderMinimap();
 }
 
 function zoomAt(factor, cx, cy){
@@ -605,6 +700,33 @@ function nodeShapePath(n, fill, stroke){
   }
 }
 
+// 文字超出节点高度时自动撑高（只增不减）。
+// 触发点：改文字、改宽度、导入、载入模板；显式改高度时不触发，尊重用户选择。
+function fitNodeHeight(n){
+  if(!n) return;
+  const fs = n.fontSize || 14;
+  let innerW = n.w - 26;
+  if(n.shape === "diamond") innerW = n.w * 0.62;
+  if(n.shape === "ellipse") innerW = n.w * 0.78;
+  const lines = wrapText(n.text, Math.max(40, innerW), fs);
+  const need = Math.ceil(lines.length * fs * 1.42 + 20);
+  if(need > n.h) n.h = need;
+}
+
+/* 对齐参考线：随缩放保持屏幕上的线宽与虚线间隔恒定 */
+function renderSnapLines(lines){
+  const col = state.theme === "dark" ? "#fb7185" : "#f43f5e";
+  const k = state.view.k;
+  const w = Math.max(0.8, 1.2 / k);
+  const dash = `${6 / k} ${5 / k}`;
+  return lines.map(l => l.axis === "v"
+    ? `<line class="ui-only" x1="${l.pos}" y1="${l.from}" x2="${l.pos}" y2="${l.to}"
+        stroke="${col}" stroke-width="${w}" stroke-dasharray="${dash}"/>`
+    : `<line class="ui-only" x1="${l.from}" y1="${l.pos}" x2="${l.to}" y2="${l.pos}"
+        stroke="${col}" stroke-width="${w}" stroke-dasharray="${dash}"/>`
+  ).join("");
+}
+
 function renderNode(n, t){
   const fill   = n.fill   || t.nodeFill;
   const stroke = n.stroke || t.nodeStroke;
@@ -639,7 +761,8 @@ function renderNode(n, t){
     width="${n.w+12}" height="${n.h+12}" rx="9" fill="none"
     stroke="${t.sel}" stroke-width="1.6" stroke-dasharray="5 3" opacity=".85"/>` : "";
 
-  return `<g class="node${isSel ? " sel" : ""}" data-kind="node" data-id="${n.id}">
+  return `<g class="node${isSel ? " sel" : ""}" data-kind="node" data-id="${n.id}"
+    data-x="${n.x}" data-y="${n.y}" data-w="${n.w}" data-h="${n.h}">
     ${selRing}
     ${nodeShapePath(n, fill, stroke)}
     ${textSvg}
@@ -725,10 +848,100 @@ function render(){
   state.edges.forEach(e => { html += renderEdge(e, t); });
   state.nodes.forEach(n => { html += renderNode(n, t); });
   state.notes.forEach(n => { html += renderNote(n, t); });
+  if(drag && drag.snapLines && drag.snapLines.length){
+    html += renderSnapLines(drag.snapLines);
+  }
   vp.innerHTML = html;
 
   applyView();
   updateStatus();
+}
+
+/* ---------- 小地图 ---------- */
+const MM_W = 168, MM_H = 116, MM_PAD = 7;
+let mmMap = { x1:0, y1:0, s:1, offX:MM_PAD, offY:MM_PAD };
+let mmDrag = false;
+
+function renderMinimap(){
+  if(!mmSvg) return;
+  const wrapR = svg.getBoundingClientRect();
+  if(wrapR.width < 2) return;
+
+  const t = THEMES[state.theme];
+  const b = contentBounds();
+
+  const vx = -state.view.tx / state.view.k;
+  const vy = -state.view.ty / state.view.k;
+  const vw = wrapR.width  / state.view.k;
+  const vh = wrapR.height / state.view.k;
+
+  let x1, y1, x2, y2;
+  if(b.empty){
+    x1 = vx; y1 = vy; x2 = vx + vw; y2 = vy + vh;
+  } else {
+    x1 = Math.min(b.x, vx);          y1 = Math.min(b.y, vy);
+    x2 = Math.max(b.x + b.w, vx+vw); y2 = Math.max(b.y + b.h, vy+vh);
+  }
+  const w = Math.max(1, x2 - x1), h = Math.max(1, y2 - y1);
+  const s = Math.min((MM_W - MM_PAD*2)/w, (MM_H - MM_PAD*2)/h);
+  const offX = MM_PAD + ((MM_W - MM_PAD*2) - w*s)/2;
+  const offY = MM_PAD + ((MM_H - MM_PAD*2) - h*s)/2;
+  mmMap = { x1, y1, s, offX, offY };
+
+  const px = v => offX + (v - x1) * s;
+  const py = v => offY + (v - y1) * s;
+  const sz = v => Math.max(1.5, v * s);
+
+  let html = "";
+  state.nodes.forEach(n => {
+    html += `<rect x="${px(n.x)}" y="${py(n.y)}" width="${sz(n.w)}" height="${sz(n.h)}"
+      rx="1.5" fill="${t.mm}" opacity=".62"/>`;
+  });
+  state.notes.forEach(n => {
+    html += `<rect x="${px(n.x)}" y="${py(n.y)}" width="${sz(n.w)}" height="${sz(n.h)}"
+      rx="1.5" fill="${t.noteBar}" opacity=".75"/>`;
+  });
+  html += `<rect x="${px(vx)}" y="${py(vy)}" width="${Math.max(4, vw*s)}" height="${Math.max(4, vh*s)}"
+    rx="2" fill="${t.sel}" fill-opacity=".08" stroke="${t.sel}" stroke-width="1.4"/>`;
+
+  mmSvg.setAttribute("viewBox", `0 0 ${MM_W} ${MM_H}`);
+  mmSvg.innerHTML = html;
+}
+
+function mmJump(ev){
+  const r = mmSvg.getBoundingClientRect();
+  if(r.width < 2) return;
+  const px0 = (ev.clientX - r.left) * (MM_W / r.width);
+  const py0 = (ev.clientY - r.top)  * (MM_H / r.height);
+  const wx = mmMap.x1 + (px0 - mmMap.offX) / mmMap.s;
+  const wy = mmMap.y1 + (py0 - mmMap.offY) / mmMap.s;
+  const wr = svg.getBoundingClientRect();
+  state.view.tx = wr.width/2  - wx * state.view.k;
+  state.view.ty = wr.height/2 - wy * state.view.k;
+  applyView();
+}
+
+mmSvg.addEventListener("pointerdown", ev => {
+  ev.preventDefault();
+  ev.stopPropagation();
+  mmDrag = true;
+  mmJump(ev);
+});
+window.addEventListener("pointermove", ev => {
+  if(mmDrag){ ev.preventDefault(); mmJump(ev); }
+});
+window.addEventListener("pointerup", () => { mmDrag = false; });
+
+/* 拖拽期间把重绘合并到动画帧，避免 pointermove 高频触发全量重建 */
+let rafPending = false;
+
+function renderThrottled(){
+  if(rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => {
+    rafPending = false;
+    render();
+  });
 }
 
 function updateStatus(){
@@ -924,6 +1137,7 @@ function loadTemplate(key){
   if(!tpl) return;
   const data = tpl.build();
   state.nodes = data.nodes;
+  state.nodes.forEach(fitNodeHeight);
   state.edges = data.edges;
   state.notes = data.notes || [];
   sel.clear();
@@ -1061,6 +1275,12 @@ function clearSelect(){
   renderInspector();
 }
 
+function selectAllNodes(){
+  sel.clear();
+  state.nodes.forEach(n => sel.add("node:" + n.id));
+  render(); renderInspector();
+}
+
 function deleteSelection(){
   if(sel.size === 0) return;
   const delNodes = new Set(selList("node"));
@@ -1112,14 +1332,22 @@ window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("pointerup", onPointerUp);
 window.addEventListener("pointercancel", onPointerUp);
 
+/* 自己判定双击：选中元素会触发重绘、DOM 被替换，浏览器原生的 dblclick 会丢 */
+let lastDown = { t:0, kind:"", id:"" };
+
 function onPointerDown(ev){
-  if(ev.button === 2) return;                  // 右键留给菜单/取消
+  if(ev.button === 2) return;                  // 右键留给菜单
   if(editorOverlay.classList.contains("on")) return;
 
   const target = ev.target.closest ? ev.target.closest("[data-kind]") : null;
   const kind = target ? target.dataset.kind : "empty";
+  const hitId = target ? (target.dataset.id || "") : "";
   const world = toWorld(ev.clientX, ev.clientY);
   lastMouseWorld = world;
+
+  const now = Date.now();
+  const dblHit = (now - lastDown.t < 330) && lastDown.kind === kind && lastDown.id === hitId;
+  lastDown = { t: now, kind, id: hitId };
 
   // 中键 / 空格 / 右键 = 平移
   if(ev.button === 1 || spaceDown){
@@ -1140,6 +1368,7 @@ function onPointerDown(ev){
     sel.clear(); sel.add("node:" + n.id);
     render(); renderInspector();
     pushHistory();
+    lastDown.t = 0;
     startEdit(n);
     return;
   }
@@ -1153,6 +1382,7 @@ function onPointerDown(ev){
     sel.clear(); sel.add("note:" + nt.id);
     render(); renderInspector();
     pushHistory();
+    lastDown.t = 0;
     startEdit(nt, "note");
     return;
   }
@@ -1184,6 +1414,13 @@ function onPointerDown(ev){
   /* --- 节点 --- */
   if(kind === "node"){
     const id = target.dataset.id;
+    if(dblHit){
+      ev.preventDefault();          // 挡住随后的 click 抢焦点
+      const n = byId(id);
+      lastDown.t = 0;
+      if(n) setTimeout(() => startEdit(n), 0);
+      return;
+    }
     const wasMulti = sel.size > 1;
     if(ev.shiftKey || ev.metaKey || ev.ctrlKey){
       toggleSelect("node", id);
@@ -1204,6 +1441,13 @@ function onPointerDown(ev){
   /* --- 连线 --- */
   if(kind === "edge"){
     const id = target.dataset.id;
+    if(dblHit){
+      ev.preventDefault();
+      const e = state.edges.find(x => x.id === id);
+      lastDown.t = 0;
+      if(e) setTimeout(() => startEdit(e, "edge"), 0);
+      return;
+    }
     if(ev.shiftKey || ev.metaKey || ev.ctrlKey) toggleSelect("edge", id);
     else selectOnly("edge", id);
     return;
@@ -1212,6 +1456,13 @@ function onPointerDown(ev){
   /* --- 便签 --- */
   if(kind === "note"){
     const id = target.dataset.id;
+    if(dblHit){
+      ev.preventDefault();
+      const nt = state.notes.find(x => x.id === id);
+      lastDown.t = 0;
+      if(nt) setTimeout(() => startEdit(nt, "note"), 0);
+      return;
+    }
     if(ev.shiftKey || ev.metaKey || ev.ctrlKey) toggleSelect("note", id);
     else if(!sel.has("note:" + id)) selectOnly("note", id);
     const ids = selList("note");
@@ -1224,8 +1475,21 @@ function onPointerDown(ev){
     return;
   }
 
-  /* --- 空白：框选 / 取消 --- */
+  /* --- 空白：双击新建 / 框选 --- */
   if(kind === "empty"){
+    if(dblHit && tool === "select"){
+      ev.preventDefault();
+      lastDown.t = 0;
+      const n = mkNode(Object.assign(BASE_NODE(), {
+        x: world.x - 85, y: world.y - 32, text:"新节点"
+      }));
+      state.nodes.push(n);
+      sel.clear(); sel.add("node:" + n.id);
+      render(); renderInspector();
+      pushHistory();
+      setTimeout(() => startEdit(n), 0);
+      return;
+    }
     if(!(ev.shiftKey || ev.metaKey || ev.ctrlKey)) clearSelect();
     drag = { type:"rubber", sx:world.x, sy:world.y, x:world.x, y:world.y, add:ev.shiftKey };
     render();
@@ -1247,16 +1511,23 @@ function onPointerMove(ev){
   }
 
   if(drag.type === "move"){
-    const dx = world.x - drag.sx, dy = world.y - drag.sy;
+    let dx = world.x - drag.sx, dy = world.y - drag.sy;
     if(!drag.moved && Math.hypot(dx, dy) * state.view.k < 2) return;
     drag.moved = true;
+    if(ev.altKey){
+      drag.snapLines = [];                 // 按住 Alt 临时关掉吸附
+    } else {
+      const snap = computeSnap(drag, dx, dy);
+      dx = snap.dx; dy = snap.dy;
+      drag.snapLines = snap.lines;
+    }
     Object.keys(drag.starts).forEach(id => {
       const n = byId(id);
       if(!n) return;
       n.x = Math.round(drag.starts[id].x + dx);
       n.y = Math.round(drag.starts[id].y + dy);
     });
-    render();
+    renderThrottled();
     return;
   }
 
@@ -1270,7 +1541,7 @@ function onPointerMove(ev){
       n.x = Math.round(drag.starts[id].x + dx);
       n.y = Math.round(drag.starts[id].y + dy);
     });
-    render();
+    renderThrottled();
     return;
   }
 
@@ -1330,6 +1601,7 @@ function onPointerUp(ev){
     const hitId = drag.hitId, wasMulti = drag.wasMulti;
     drag = null;
     if(wasMoved){ pushHistory(); saveLocal(); }
+    render();                 // 清掉参考线
     // 多选状态下单击（未拖动）某个节点 → 收窄为单选
     if(!wasMoved && wasMulti && hitId){ selectOnly("node", hitId); return; }
     renderInspector();
@@ -1394,44 +1666,93 @@ svg.addEventListener("wheel", ev => {
   }
 }, {passive:false});
 
-/* ---------- 双击 ---------- */
-svg.addEventListener("dblclick", ev => {
-  const target = ev.target.closest ? ev.target.closest("[data-kind]") : null;
-  if(target && target.dataset.kind === "node"){
-    const n = byId(target.dataset.id);
-    if(n) startEdit(n);
-    return;
-  }
-  if(target && target.dataset.kind === "note"){
-    const nt = state.notes.find(x => x.id === target.dataset.id);
-    if(nt) startEdit(nt, "note");
-    return;
-  }
-  if(!target || target.dataset.kind === "empty"){
-    // 双击空白新建节点
-    const w = toWorld(ev.clientX, ev.clientY);
-    const n = mkNode(Object.assign(BASE_NODE(), {
-      x: w.x - 85, y: w.y - 32, text:"新节点"
-    }));
-    state.nodes.push(n);
-    sel.clear(); sel.add("node:" + n.id);
-    render(); renderInspector();
-    pushHistory();
-    startEdit(n);
-  }
-});
-
 /* ---------- 右键取消 ---------- */
 svg.addEventListener("contextmenu", ev => {
   ev.preventDefault();
-  if(sel.size > 0) clearSelect();
-  else if(tool !== "select") setTool("select");
+  const target = ev.target.closest ? ev.target.closest("[data-kind]") : null;
+  const kind = target ? target.dataset.kind : null;
+  const id = target ? target.dataset.id : null;
+  const at = { x: ev.clientX, y: ev.clientY };
+
+  if(kind === "node"){
+    if(!sel.has("node:" + id)) selectOnly("node", id);
+    openMenu(null, [
+      {label:"复制", k:"Ctrl+C", fn: copySelection},
+      {label:"复制一份", k:"Ctrl+D", fn: duplicateSelection},
+      {sep:true},
+      {label:"置顶", fn: bringToFront},
+      {label:"置底", fn: sendToBack},
+      {sep:true},
+      {label:"删除节点", k:"Del", fn: deleteSelection}
+    ], at);
+    return;
+  }
+
+  if(kind === "edge"){
+    if(!sel.has("edge:" + id)) selectOnly("edge", id);
+    const e = state.edges.find(x => x.id === id);
+    openMenu(null, [
+      {label:"编辑标签", fn: () => { if(e) startEdit(e, "edge"); }},
+      {label: e && e.dashed ? "改为实线" : "改为虚线", fn: () => {
+        if(!e) return;
+        e.dashed = !e.dashed;
+        render(); renderInspector(); pushHistory(); saveLocal();
+      }},
+      {label:"反向连线", fn: () => {
+        if(!e) return;
+        const f = e.from; e.from = e.to; e.to = f;
+        const s = e.fromSide; e.fromSide = e.toSide; e.toSide = s;
+        render(); pushHistory(); saveLocal();
+      }},
+      {sep:true},
+      {label:"删除连线", k:"Del", fn: deleteSelection}
+    ], at);
+    return;
+  }
+
+  if(kind === "note"){
+    if(!sel.has("note:" + id)) selectOnly("note", id);
+    openMenu(null, [
+      {label:"编辑内容", fn: () => {
+        const nt = state.notes.find(x => x.id === id);
+        if(nt) startEdit(nt, "note");
+      }},
+      {sep:true},
+      {label:"删除批注", k:"Del", fn: deleteSelection}
+    ], at);
+    return;
+  }
+
+  clearSelect();
+  openMenu(null, [
+    {label:"粘贴", k:"Ctrl+V", fn: pasteClipboard},
+    {label:"全选节点", k:"Ctrl+A", fn: selectAllNodes},
+    {sep:true},
+    {label:"适配视图", k:"F", fn: () => fitView()},
+    {label:"自动布局（左 → 右）", fn: () => autoLayout("LR")},
+    {sep:true},
+    {label:"导出 PNG", fn: exportPNG},
+    {label:"导出 SVG", fn: exportSVG}
+  ], at);
 });
 
 /* ============================================================
    11. 文字就地编辑
    ============================================================ */
 let editing = null;   // {obj, kind}
+
+/* 连线中点（世界坐标），用于就地编辑标签 */
+function edgeMidpoint(e){
+  const a = byId(e.from), b = byId(e.to);
+  if(!a || !b) return null;
+  const auto = autoSides(a, b);
+  const s1 = (e.fromSide && e.fromSide !== "auto") ? e.fromSide : auto[0];
+  const s2 = (e.toSide   && e.toSide   !== "auto") ? e.toSide   : auto[1];
+  const p1 = anchorPoint(a, s1), p2 = anchorPoint(b, s2);
+  const d = Math.max(46, Math.hypot(p2.x - p1.x, p2.y - p1.y) * 0.42);
+  const c1 = ctrlPoint(p1, s1, d), c2 = ctrlPoint(p2, s2, d);
+  return bezierPoint(p1, c1, c2, p2, 0.5);
+}
 
 function startEdit(obj, kind){
   if(!obj) return;
@@ -1442,7 +1763,15 @@ function startEdit(obj, kind){
   const pad = 6;
 
   let left, top, width, height;
-  if(kind === "note"){
+  if(kind === "edge"){
+    const m = edgeMidpoint(obj) || {x:0, y:0};
+    width = 150; height = 34;
+    left = r.left + state.view.tx + m.x * k - width/2;
+    top  = r.top  + state.view.ty + m.y * k - height/2;
+    editorArea.style.textAlign = "center";
+    editorArea.style.fontSize = Math.max(10, 12 * k) + "px";
+    editorArea.style.lineHeight = "1.3";
+  } else if(kind === "note"){
     left = r.left + state.view.tx + obj.x * k + pad;
     top  = r.top  + state.view.ty + (obj.y + 20) * k + pad;
     width  = obj.w * k - pad*2;
@@ -1462,11 +1791,11 @@ function startEdit(obj, kind){
 
   editorOverlay.style.left = Math.max(0, left) + "px";
   editorOverlay.style.top  = Math.max(0, top) + "px";
-  editorOverlay.style.width = Math.max(80, width) + "px";
-  editorOverlay.style.height = Math.max(36, height) + "px";
+  editorOverlay.style.width = Math.max(kind === "edge" ? 100 : 80, width) + "px";
+  editorOverlay.style.height = Math.max(kind === "edge" ? 32 : 36, height) + "px";
   editorOverlay.classList.add("on");
 
-  editorArea.value = obj.text || "";
+  editorArea.value = (kind === "edge" ? obj.label : obj.text) || "";
   editorArea.focus();
   editorArea.select();
 }
@@ -1474,7 +1803,12 @@ function startEdit(obj, kind){
 function commitEdit(){
   if(!editing) return;
   const {obj, kind} = editing;
-  obj.text = editorArea.value;
+  if(kind === "edge"){
+    obj.label = editorArea.value;
+  } else {
+    obj.text = editorArea.value;
+    if(kind === "node") fitNodeHeight(obj);
+  }
   editing = null;
   editorOverlay.classList.remove("on");
   render();
@@ -1587,6 +1921,10 @@ function renderNodePanel(n){
     <div class="insp-sec">
       <div class="insp-title">操作</div>
       <button class="btn-block" data-act="dup">复制一份 (Ctrl+D)</button>
+      <div class="row2" style="margin-top:6px">
+        <button class="btn-block" data-act="front" style="margin-top:0">置顶</button>
+        <button class="btn-block" data-act="back" style="margin-top:0">置底</button>
+      </div>
       <button class="btn-block danger" data-act="del">删除节点 (Del)</button>
     </div>`;
 }
@@ -1692,8 +2030,8 @@ inspector.addEventListener("input", ev => {
 
   if(nIds.length === 1){
     const n = byId(nIds[0]); if(!n) return;
-    if(prop === "text"){ n.text = el.value; }
-    else if(prop === "w") n.w = Math.max(40, +el.value || 40);
+    if(prop === "text"){ n.text = el.value; fitNodeHeight(n); }
+    else if(prop === "w"){ n.w = Math.max(40, +el.value || 40); fitNodeHeight(n); }
     else if(prop === "h") n.h = Math.max(28, +el.value || 28);
     else if(prop === "x") n.x = +el.value || 0;
     else if(prop === "y") n.y = +el.value || 0;
@@ -1760,6 +2098,8 @@ inspector.addEventListener("click", ev => {
     const act = actBtn.dataset.act;
     if(act === "del") deleteSelection();
     if(act === "dup") duplicateSelection();
+    if(act === "front") bringToFront();
+    if(act === "back") sendToBack();
     if(act === "resetColor"){
       const n = byId(selList("node")[0]);
       const e = state.edges.find(x => x.id === selList("edge")[0]);
@@ -1818,7 +2158,7 @@ function doAlign(mode){
 /* ============================================================
    13. 菜单系统
    ============================================================ */
-function openMenu(anchor, items){
+function openMenu(anchor, items, at){
   menuEl.innerHTML = "";
   items.forEach(it => {
     if(it.sep){ const d = document.createElement("div"); d.className = "menu-sep"; menuEl.appendChild(d); return; }
@@ -1831,11 +2171,20 @@ function openMenu(anchor, items){
   });
   menuLayer.classList.add("on");
 
-  const r = anchor.getBoundingClientRect();
   const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
-  let left = r.left, top = r.bottom + 6;
+  let left, top;
+  if(at){
+    left = at.x; top = at.y;
+  } else {
+    const r = anchor.getBoundingClientRect();
+    left = r.left; top = r.bottom + 6;
+  }
   if(left + mw > window.innerWidth - 10) left = window.innerWidth - mw - 10;
-  if(top + mh > window.innerHeight - 10) top = Math.max(10, r.top - mh - 6);
+  if(top + mh > window.innerHeight - 10){
+    top = at ? Math.max(10, at.y - mh) : Math.max(10, anchor.getBoundingClientRect().top - mh - 6);
+  }
+  if(left < 8) left = 8;
+  if(top < 8) top = 8;
   menuEl.style.left = left + "px";
   menuEl.style.top = top + "px";
 }
@@ -1864,6 +2213,7 @@ function importJSONText(text){
   try{ o = JSON.parse(text); }catch(err){ toast("JSON 解析失败，检查文件格式"); return; }
   if(!o || !Array.isArray(o.nodes)){ toast("不是有效的 FlowForge 文件"); return; }
   state.nodes = o.nodes || [];
+  state.nodes.forEach(fitNodeHeight);
   state.edges = o.edges || [];
   state.notes = o.notes || [];
   sel.clear();
@@ -1972,6 +2322,7 @@ function importCSVFiles(files){
     }
 
     state.nodes = nodes;
+    state.nodes.forEach(fitNodeHeight);
     state.edges = edges;
     state.notes = [];
     sel.clear();
@@ -1996,19 +2347,17 @@ function toBase64(str){
   return btoa(bin);
 }
 
-function exportPNG(){
-  if(state.nodes.length === 0 && state.notes.length === 0){
-    toast("画布是空的"); return;
-  }
+/* 生成一份可独立打开的 SVG（PNG 与 SVG 导出共用这套逻辑） */
+function buildExportSVG(){
   const b = contentBounds();
   const pad = 56;
-  const W = Math.ceil(b.w + pad*2);
-  const H = Math.ceil(b.h + pad*2);
+  const W = Math.ceil(b.w + pad * 2);
+  const H = Math.ceil(b.h + pad * 2);
   const t = THEMES[state.theme];
 
   const clone = svg.cloneNode(true);
   clone.querySelectorAll(".ui-only").forEach(el => el.remove());
-  // 去掉网格与 pattern 背景，改画纯色
+  // 去掉网格与 pattern，换成纯色底
   const gRect = clone.querySelector("#gridRect");
   if(gRect) gRect.remove();
   const gPat = clone.querySelector("#gridPat");
@@ -2022,13 +2371,31 @@ function exportPNG(){
   clone.setAttribute("viewBox", `0 0 ${W} ${H}`);
 
   const bg = document.createElementNS(NS, "rect");
-  bg.setAttribute("x","0"); bg.setAttribute("y","0");
+  bg.setAttribute("x", "0"); bg.setAttribute("y", "0");
   bg.setAttribute("width", String(W)); bg.setAttribute("height", String(H));
   bg.setAttribute("fill", t.canvas);
   clone.insertBefore(bg, clone.firstChild);
 
-  const svgStr = new XMLSerializer().serializeToString(clone);
-  const url = "data:image/svg+xml;base64," + toBase64(svgStr);
+  return { str: new XMLSerializer().serializeToString(clone), W, H };
+}
+
+function exportSVG(){
+  if(state.nodes.length === 0 && state.notes.length === 0){
+    toast("画布是空的"); return;
+  }
+  const { str } = buildExportSVG();
+  const head = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  download(new Blob([head + str], {type:"image/svg+xml;charset=utf-8"}),
+    "flowforge-" + stamp() + ".svg");
+  toast("SVG 已导出（矢量，可无损缩放）");
+}
+
+function exportPNG(){
+  if(state.nodes.length === 0 && state.notes.length === 0){
+    toast("画布是空的"); return;
+  }
+  const { str, W, H } = buildExportSVG();
+  const url = "data:image/svg+xml;base64," + toBase64(str);
 
   const img = new Image();
   img.onload = () => {
@@ -2045,8 +2412,69 @@ function exportPNG(){
       toast("PNG 已导出（2 倍分辨率）");
     }, "image/png");
   };
-  img.onerror = () => toast("PNG 渲染失败，可试试导出 JSON");
+  img.onerror = () => toast("PNG 渲染失败，可改用 SVG 导出");
   img.src = url;
+}
+
+/* ---------- 复制粘贴 ---------- */
+function copySelection(){
+  const ids = selList("node");
+  if(ids.length === 0){ toast("先选中节点再复制"); return; }
+  const set = new Set(ids);
+  clipboard = {
+    nodes: state.nodes.filter(n => set.has(n.id)).map(n => Object.assign({}, n)),
+    edges: state.edges.filter(e => set.has(e.from) && set.has(e.to)).map(e => Object.assign({}, e))
+  };
+  toast(`已复制 ${clipboard.nodes.length} 个节点`);
+}
+
+function pasteClipboard(){
+  if(!clipboard || clipboard.nodes.length === 0){ toast("剪贴板里没有节点"); return; }
+  pushHistory();
+  const map = new Map();
+  const newIds = [];
+
+  clipboard.nodes.forEach(n => {
+    const copy = Object.assign({}, n, { id: uid("n"), x: n.x + 40, y: n.y + 40 });
+    state.nodes.push(copy);
+    map.set(n.id, copy.id);
+    newIds.push(copy.id);
+  });
+  clipboard.edges.forEach(e => {
+    if(map.has(e.from) && map.has(e.to)){
+      state.edges.push(Object.assign({}, e, {
+        id: uid("e"), from: map.get(e.from), to: map.get(e.to)
+      }));
+    }
+  });
+  // 递进偏移：连续粘贴不会一坨叠在一起
+  clipboard.nodes.forEach(n => { n.x += 22; n.y += 22; });
+
+  sel.clear();
+  newIds.forEach(id => sel.add("node:" + id));
+  render(); renderInspector(); pushHistory(); saveLocal();
+  toast(`已粘贴 ${newIds.length} 个节点`);
+}
+
+/* ---------- 图层顺序 ---------- */
+function bringToFront(){
+  const ids = new Set(selList("node"));
+  if(ids.size === 0) return;
+  pushHistory();
+  const stay = state.nodes.filter(n => !ids.has(n.id));
+  const rise = state.nodes.filter(n => ids.has(n.id));
+  state.nodes = stay.concat(rise);
+  render(); pushHistory(); saveLocal();
+}
+
+function sendToBack(){
+  const ids = new Set(selList("node"));
+  if(ids.size === 0) return;
+  pushHistory();
+  const stay = state.nodes.filter(n => !ids.has(n.id));
+  const sink = state.nodes.filter(n => ids.has(n.id));
+  state.nodes = sink.concat(stay);
+  render(); pushHistory(); saveLocal();
 }
 
 /* ============================================================
@@ -2091,6 +2519,7 @@ $("#btnExport").addEventListener("click", ev => {
   openMenu(ev.currentTarget, [
     {head:"导出"},
     {label:"PNG 图片（2x）", k:"Ctrl+E", fn: exportPNG},
+    {label:"SVG 矢量图", fn: exportSVG},
     {label:"JSON 工程文件", k:"Ctrl+S", fn: exportJSON},
     {label:"CSV 表格（两份）", fn: exportCSV}
   ]);
@@ -2152,38 +2581,47 @@ fileInput.addEventListener("change", () => {
    16. 快捷键
    ============================================================ */
 window.addEventListener("keydown", ev => {
-  if(editing) return;   // 编辑中不接管
+  if(editing) return;   // 就地编辑器打开时不接管
   const mod = ev.ctrlKey || ev.metaKey;
   const key = ev.key;
+  const el0 = document.activeElement;
+  const inField = !!el0 && /^(INPUT|TEXTAREA|SELECT)$/.test(el0.tagName);
 
   if(key === " " && !mod){
-    if(document.activeElement && /input|textarea|select/i.test(document.activeElement.tagName)) return;
+    if(inField) return;
     spaceDown = true;
     ev.preventDefault();
     return;
   }
 
-  // 撤销 / 重做
+  // 撤销 / 重做 / 全选：焦点在输入框里时交还给浏览器（撤销的是文字，不是画布）
   if(mod && key.toLowerCase() === "z"){
+    if(inField) return;
     ev.preventDefault();
     ev.shiftKey ? redo() : undo();
     return;
   }
-  if(mod && key.toLowerCase() === "y"){ ev.preventDefault(); redo(); return; }
+  if(mod && key.toLowerCase() === "y"){
+    if(inField) return;
+    ev.preventDefault(); redo(); return;
+  }
 
   if(mod && key.toLowerCase() === "a"){
+    if(inField) return;
     ev.preventDefault();
-    sel.clear();
-    state.nodes.forEach(n => sel.add("node:" + n.id));
-    render(); renderInspector();
+    selectAllNodes();
     return;
   }
+  // 保存 / 导出 / 复制：输入框里也接管，避免触发浏览器的保存对话框
   if(mod && key.toLowerCase() === "s"){ ev.preventDefault(); exportJSON(); return; }
   if(mod && key.toLowerCase() === "e"){ ev.preventDefault(); exportPNG(); return; }
   if(mod && key.toLowerCase() === "d"){ ev.preventDefault(); duplicateSelection(); return; }
+  if(mod && key.toLowerCase() === "c"){ if(inField) return; ev.preventDefault(); copySelection(); return; }
+  if(mod && key.toLowerCase() === "v"){ if(inField) return; ev.preventDefault(); pasteClipboard(); return; }
   if(mod && key === "0"){ ev.preventDefault(); $("#zReset").click(); return; }
 
   if(key === "Delete" || key === "Backspace"){
+    if(inField) return;                 // 别把输入框里的退格变成删节点
     if(sel.size > 0){ ev.preventDefault(); deleteSelection(); }
     return;
   }
@@ -2197,7 +2635,7 @@ window.addEventListener("keydown", ev => {
   }
 
   // 方向键微移
-  if(key.startsWith("Arrow") && sel.size > 0){
+  if(key.startsWith("Arrow") && !inField && sel.size > 0){
     const step = ev.shiftKey ? 10 : 1;
     const dx = key === "ArrowLeft" ? -step : key === "ArrowRight" ? step : 0;
     const dy = key === "ArrowUp" ? -step : key === "ArrowDown" ? step : 0;
@@ -2240,21 +2678,26 @@ function showHelp(){
   const rows = [
     ["<kbd>双击空白</kbd>", "新建节点并直接输入文字"],
     ["<kbd>双击节点</kbd>", "编辑节点文字"],
+    ["<kbd>双击连线</kbd>", "编辑连线标签"],
     ["<kbd>拖节点圆点</kbd>", "从任意方向拉出连线"],
-    ["<kbd>Shift</kbd>+拖动节点", "加选 / 减选"],
-    ["<kbd>Shift</kbd>+拖动空白", "框选一批节点"],
-    ["<kbd>空格</kbd>+拖拽 / 中键拖拽", "平移画布"],
+    ["<kbd>拖拽节点</kbd>", "靠近其它节点时自动吸附对齐，并显示参考线"],
+    ["<kbd>Alt</kbd> + 拖拽", "临时关闭吸附，自由摆放"],
+    ["<kbd>Shift</kbd> + 拖动节点", "加选 / 减选"],
+    ["<kbd>Shift</kbd> + 拖动空白", "框选一批节点"],
+    ["<kbd>空格</kbd> + 拖拽 / 中键拖拽", "平移画布"],
     ["<kbd>滚轮</kbd>", "以光标为中心缩放"],
-    ["<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>", "撤销 / 重做"],
+    ["<kbd>小地图</kbd>", "右下角，点击或拖拽直接跳转视口"],
+    ["<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>", "撤销 / 重做（输入框内不拦截）"],
     ["<kbd>Ctrl</kbd>+<kbd>A</kbd>", "全选节点"],
-    ["<kbd>Ctrl</kbd>+<kbd>D</kbd>", "复制选中节点"],
+    ["<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Ctrl</kbd>+<kbd>V</kbd>", "复制 / 粘贴节点（含内部连线）"],
+    ["<kbd>Ctrl</kbd>+<kbd>D</kbd>", "原地复制一份"],
     ["<kbd>Delete</kbd>", "删除选中内容"],
     ["<kbd>方向键</kbd> / <kbd>Shift</kbd>+方向键", "微移 1px / 10px"],
     ["<kbd>V</kbd> <kbd>N</kbd> <kbd>C</kbd> <kbd>M</kbd>", "选择 / 加节点 / 连线 / 批注"],
     ["<kbd>F</kbd>", "适配视图（全图居中）"],
     ["<kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>E</kbd>", "导出 JSON / 导出 PNG"],
     ["<kbd>Esc</kbd>", "取消选择 / 退出当前工具"],
-    ["<kbd>右键</kbd>", "取消选择"]
+    ["<kbd>右键</kbd>", "上下文菜单：复制、置顶置底、改线型、粘贴、导出"]
   ];
   modalEl.innerHTML = `
     <button class="btn icon modal-close" id="modalClose">✕</button>
